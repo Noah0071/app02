@@ -385,3 +385,17 @@ def static_files(path):
 if __name__ == "__main__":
     # เพิ่ม host='0.0.0.0' และ threaded=True เพื่อรองรับหลาย request และเข้าถึงจาก network อื่นได้
     app.run(debug=True, host="0.0.0.0", port=5000, threaded=True)
+
+# เพิ่มคำแนะนำสำหรับการติดตั้ง Flask และ requirements.txt
+# หากรันแล้วเจอ ModuleNotFoundError: No module named 'flask'
+# ให้ติดตั้ง flask ด้วยคำสั่ง:
+# pip install flask
+# หรือ
+# pip3 install flask
+# หรือ
+# python -m pip install flask
+#
+# หากใช้ requirements.txt ให้เพิ่มบรรทัดนี้ในไฟล์:
+# flask
+# แล้วติดตั้งด้วย:
+# pip install -r requirements.txt
