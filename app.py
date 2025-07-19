@@ -1,10 +1,9 @@
-# --------------------- app.py ---------------------
 from flask import Flask, jsonify, request, send_from_directory
 import requests
 
 app = Flask(__name__, static_folder="")
 
-PUBG_API_KEY = "ใส่_KEY_ของคุณตรงนี้"
+PUBG_API_KEY = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiJmNWJkMmFhMC00NmFiLTAxM2UtYWZmZC02ZThjNzIzMTJmZDIiLCJpc3MiOiJnYW1lbG9ja2VyIiwiaWF0IjoxNzUyOTE1MjkzLCJwdWIiOiJibHVlaG9sZSIsInRpdGxlIjoicHViZyIsImFwcCI6InBlcmZvcm1hbmNlLWFuIn0.LOqXQphW7_738pAyoPnjNFSuMvfjNAS4pFYIMSSsTEw"  # <-- ใส่ KEY จริงของคุณ
 PUBG_BASE = "https://api.pubg.com/shards/steam"
 HEADERS = {
     "Authorization": f"Bearer {PUBG_API_KEY}",
@@ -13,13 +12,13 @@ HEADERS = {
 
 def get_player_id(player_name):
     url = f"{PUBG_BASE}/players?filter[playerNames]={player_name}"
-    r = requests.get(url, headers=HEADERS, timeout=15)
+    r = requests.get(url, headers=HEADERS)
     data = r.json()
     if "data" in data and data["data"]:
         return data["data"][0]["id"], data["data"][0]["attributes"]["name"]
     return None, None
 
-def get_recent_match_ids(player_id, max_matches=5):
+def get_recent_match_ids(player_id, max_matches=5):   # <<--- MAX 5!
     url = f"{PUBG_BASE}/players/{player_id}"
     r = requests.get(url, headers=HEADERS)
     data = r.json()
@@ -80,11 +79,11 @@ def get_match_info(match_id, player_name):
 @app.route("/api/matches/<player_name>")
 def api_matches(player_name):
     page = int(request.args.get("page", 0))
-    PER_PAGE = 5
+    PER_PAGE = 5  # <<--- ดึง 5 ต่อ page
     pid, pname = get_player_id(player_name)
     if not pid:
         return jsonify({"matches": []})
-    match_ids = get_recent_match_ids(pid, max_matches=5)
+    match_ids = get_recent_match_ids(pid, max_matches=5)  # <<--- ดึง 5 ล่าสุด
     page_ids = match_ids[page*PER_PAGE:(page+1)*PER_PAGE]
     matches = []
     for mid in page_ids:
@@ -239,6 +238,7 @@ def get_tier_from_stats(stats):
     if dmg > 90: return "C"
     return "D"
 
+# --- Rankings (ส่ง tier ไปด้วย ใช้ tier นี้แทนช่อง Longest) ---
 @app.route("/api/rankings/<match_id>")
 def total_rankings(match_id):
     player = request.args.get("player", "")
@@ -259,7 +259,7 @@ def total_rankings(match_id):
             s = obj["attributes"]["stats"]
             damage = int(s.get("damageDealt", 0))
             kills = s.get("kills", 0)
-            kd = kills
+            kd = kills  # สมมติเป็น avg kill/game (เพราะ 1 เกม)
             tier = get_tier_from_stats({"damage": damage, "kd": kd})
             participants.append({
                 "name": s.get("name", "-"),
@@ -270,7 +270,7 @@ def total_rankings(match_id):
                 "damage": damage,
                 "dbnos": s.get("DBNOs", 0),
                 "traveled": f"{((s.get('rideDistance',0)+s.get('walkDistance',0))/1000):.2f}km",
-                "tier": tier,    # <<== ตรงนี้ส่ง tier แทน
+                "tier": tier,
                 "timeAlive": f"{int(s.get('timeSurvived',0)//60):02d}:{int(s.get('timeSurvived',0)%60):02d}",
                 "rank": s.get("winPlace", 999),
                 "alive": s.get("DBNOs", 0) == 0 and s.get("winPlace", 999) == 1,
@@ -282,6 +282,7 @@ def total_rankings(match_id):
         p["highlight"] = (p["name"].lower() == player.lower())
     return jsonify({"rankings": participants, "player": player})
 
+# --- Compare 1v1 ---
 @app.route("/api/playercompare")
 def api_player_compare():
     player1 = request.args.get("player1")
@@ -315,8 +316,10 @@ def api_player_compare():
     win2 = 100 - win1
     return jsonify({"player1":stat1,"player2":stat2,"win1":win1,"win2":win2})
 
+# --- Compare Team ---
 @app.route("/api/teamcompare")
 def api_team_compare():
+    # รับชื่อทีมจาก query string และกรองชื่อว่าง
     team1 = [n.strip() for n in request.args.get("team1", "").split(",") if n.strip()]
     team2 = [n.strip() for n in request.args.get("team2", "").split(",") if n.strip()]
     def get_team_stats(names):
@@ -359,14 +362,26 @@ def api_team_compare():
     win2 = 100 - win1
     return jsonify({"team1":t1,"team2":t2,"win1":win1,"win2":win2, "members1": t1["members"], "members2": t2["members"]})
 
+def get_player_id(player_name):
+    url = f"{PUBG_BASE}/players?filter[playerNames]={player_name}"
+    print("GET:", url)
+    r = requests.get(url, headers=HEADERS, timeout=15)
+    print("Status:", r.status_code)
+    data = r.json()
+    print("Data:", data)
+    if "data" in data and data["data"]:
+        return data["data"][0]["id"], data["data"][0]["attributes"]["name"]
+    return None, None
+
+
+# --- Static ---
 @app.route("/")
 def root():
     return send_from_directory(".", "index.html")
-
 @app.route("/<path:path>")
 def static_files(path):
     return send_from_directory(".", path)
 
 if __name__ == "__main__":
-    # ใช้ host 0.0.0.0 เพื่อรันบนทุก IP, threaded รองรับหลาย request
+    # เพิ่ม host='0.0.0.0' และ threaded=True เพื่อรองรับหลาย request และเข้าถึงจาก network อื่นได้
     app.run(debug=True, host="0.0.0.0", port=5000, threaded=True)
