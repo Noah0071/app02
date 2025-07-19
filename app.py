@@ -1,7 +1,3 @@
-# ตรวจสอบว่าติดตั้ง Flask และ Requests แล้วหรือยัง
-# ถ้าไม่ ให้ติดตั้งด้วยคำสั่ง:
-# pip install flask requests
-
 from flask import Flask, jsonify, request, send_from_directory
 import requests
 
