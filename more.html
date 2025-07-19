@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Match Performance - PUBG</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { background: linear-gradient(135deg, #e9efff 0%, #f6f8fb 100%); color: #232e3a; font-family: 'Segoe UI', 'Prompt', 'Kanit', sans-serif; }
+    .main-container {
+      max-width: 1200px;
+      margin: 48px auto 0 auto;
+      background: #fff;
+      border-radius: 22px;
+      box-shadow: 0 8px 32px 0 rgba(51,73,164,0.08), 0 1.5px 8px 0 rgba(0,0,0,0.03);
+      padding: 36px 28px 32px 28px;
+    }
+    .nav-tabs {
+      border-radius: 16px;
+      overflow: hidden;
+      background: #f3f6fd;
+      margin-bottom: 28px;
+      box-shadow: 0 2px 8px 0 rgba(51,73,164,0.04);
+    }
+    .nav-tabs .nav-link {
+      font-size: 1.08em;
+      color: #3349a4;
+      border: none;
+      border-radius: 0;
+      transition: background 0.2s, color 0.2s;
+      padding: 12px 28px;
+      font-weight: 500;
+    }
+    .nav-tabs .nav-link.active {
+      background: linear-gradient(90deg, #3349a4 60%, #5e7be2 100%) !important;
+      color: #fff !important;
+      font-weight: bold;
+      box-shadow: 0 2px 8px 0 rgba(51,73,164,0.08);
+    }
+    .section-title {
+      font-weight: bold;
+      color: #3349a4;
+      margin-top: 32px;
+      font-size: 1.35em;
+      letter-spacing: 0.5px;
+      margin-bottom: 16px;
+      border-left: 5px solid #5e7be2;
+      padding-left: 12px;
+    }
+    .info-label { color: #8b99ae; font-size: 0.98em; }
+    .info-value { font-size: 1.22em; font-weight: 600; color: #232e3a; }
+    .hr-dash { border: 0; border-top: 1.5px dashed #d2d8e6; margin: 26px 0 18px 0; }
+    .info-col { margin-bottom: 18px; }
+    .loading-spinner { padding: 90px 0 50px 0; }
+    .card-section {
+      background: #f8faff;
+      border-radius: 18px;
+      box-shadow: 0 2px 8px 0 rgba(51,73,164,0.04);
+      padding: 24px 18px 18px 18px;
+      margin-bottom: 18px;
+    }
+    .table-responsive { font-size: 1.01em;}
+    .table-sm th, .table-sm td { padding: 7px 10px !important;}
+    .table th { background: #f8f9fb;}
+    .table thead th { white-space: nowrap;}
+    .table-dark th { background: #232e3a !important; color: #fff; }
+    .active-row { background: #e9f0ff !important; font-weight: bold !important; }
+    .btn-xs { font-size: 0.85em; padding: 0.25em 1.1em;}
+    .btn-outline-primary, .btn-outline-success, .btn-outline-danger {
+      border-radius: 14px !important;
+      font-weight: 500;
+      transition: background 0.18s, color 0.18s;
+    }
+    .btn-outline-primary:hover, .btn-outline-success:hover, .btn-outline-danger:hover {
+      background: #3349a4 !important;
+      color: #fff !important;
+      border-color: #3349a4 !important;
+    }
+    .modal-content { border-radius: 18px; }
+    .badge { font-size: 1em; border-radius: 8px; }
+    .table-bordered { border-radius: 12px; overflow: hidden; }
+    .table tbody tr:hover { background: #f3f7ff !important; }
+    #back-btn-wrap .btn { border-radius: 14px; font-size: 1.04em; }
+    /* Team Stats Table */
+    .team-table thead th {
+      background: linear-gradient(90deg, #e9efff 60%, #f8faff 100%);
+      color: #3349a4;
+      font-weight: 600;
+      font-size: 1.07em;
+      border-bottom: 2px solid #b7c7e6;
+    }
+    .team-table tbody tr {
+      transition: background 0.18s;
+    }
+    .team-table tbody tr:hover {
+      background: #f3f7ff !important;
+    }
+    .team-table td, .team-table th {
+      vertical-align: middle !important;
+      border-color: #e3e8f0 !important;
+    }
+    .team-table .main-player {
+      background: #fff7f0 !important;
+      color: #d33 !important;
+      font-weight: bold;
+    }
+    .team-table {
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px 0 rgba(51,73,164,0.04);
+      margin-bottom: 0;
+    }
+    /* Rankings Table */
+    .rank-table thead th {
+      background: linear-gradient(90deg, #232e3a 60%, #5e7be2 100%) !important;
+      color: #fff !important;
+      font-weight: 600;
+      font-size: 1.07em;
+      border-bottom: 2px solid #b7c7e6;
+    }
+    .rank-table tbody tr {
+      transition: background 0.18s;
+    }
+    .rank-table tbody tr:hover {
+      background: #f3f7ff !important;
+    }
+    .rank-table td, .rank-table th {
+      vertical-align: middle !important;
+      border-color: #e3e8f0 !important;
+    }
+    .rank-table .active-row {
+      background: #e9f0ff !important;
+      font-weight: bold !important;
+    }
+    .rank-team-divider td {
+      background: #f3f6fd !important;
+      color: #5e7be2 !important;
+      font-weight: 600;
+      font-size: 1.02em;
+      border-top: 2.5px solid #b7c7e6 !important;
+      border-bottom: 2.5px solid #b7c7e6 !important;
+      padding: 7px 0 !important;
+    }
+    @media (max-width: 900px) {
+      .main-container { padding: 18px 2vw 18px 2vw; }
+      .section-title { margin-top: 18px; font-size: 1.1em;}
+      .info-label, .info-value { font-size: 1em; }
+      .table-responsive { font-size: 0.97em;}
+    }
+    @media (max-width: 600px) {
+      .main-container { padding: 8px 0 8px 0; }
+      .section-title { font-size: 1em;}
+    }
+  </style>
+</head>
+<body>
+  <div class="main-container">
+    <!-- Back Button -->
+    <div id="back-btn-wrap"></div>
+    <ul class="nav nav-tabs mb-3" id="main-tabs">
+      <li class="nav-item"><a class="nav-link active" id="tab-perf" href="#" onclick="showTab('perf')">Performance</a></li>
+      <li class="nav-item"><a class="nav-link" id="tab-team" href="#" onclick="showTab('team')">Team Stats</a></li>
+      <li class="nav-item"><a class="nav-link" id="tab-rank" href="#" onclick="showTab('rank')">Total Rankings</a></li>
+      <li class="nav-item"><a class="nav-link" href="#" disabled>Kill Logs</a></li>
+    </ul>
+    <!-- Performance -->
+    <div id="perf-section">
+      <div id="perf-loading" class="text-center loading-spinner"><div class="spinner-border text-primary"></div><div>Loading...</div></div>
+      <div id="perf-content" style="display:none;">
+        <div class="card-section">
+          <div class="section-title">Rating / Ranks</div>
+          <div class="row mb-2">
+            <div class="col-6 col-md-3 info-col">
+              <div class="info-label">Host Server</div>
+              <div class="info-value" id="host-server">-</div>
+            </div>
+            <div class="col-6 col-md-3 info-col">
+              <div class="info-label">Map</div>
+              <div class="info-value" id="map-name">-</div>
+            </div>
+          </div>
+        </div>
+        <div class="card-section">
+          <div class="section-title">Combat</div>
+          <div class="row">
+            <div class="col-6 col-md-2 info-col"><div class="info-value" id="damage">-</div><div class="info-label">Combat</div></div>
+            <div class="col-6 col-md-2 info-col"><div class="info-value" id="kills">-</div><div class="info-label">Kills</div></div>
+            <div class="col-6 col-md-2 info-col"><div class="info-value" id="headshots">-</div><div class="info-label">Headshots</div></div>
+            <div class="col-6 col-md-2 info-col"><div class="info-value" id="assists">-</div><div class="info-label">Assists</div></div>
+            <div class="col-6 col-md-2 info-col"><div class="info-value" id="roadKills">-</div><div class="info-label">Road Kills</div></div>
+            <div class="col-6 col-md-2 info-col"><div class="info-value" id="vehiclesDestroyed">-</div><div class="info-label">Vehicles Destroyed</div></div>
+            <div class="col-6 col-md-2 info-col"><div class="info-value" id="dbnos">-</div><div class="info-label">DBNOs</div></div>
+            <div class="col-6 col-md-2 info-col"><div class="info-value" id="revives">-</div><div class="info-label">Revives</div></div>
+          </div>
+        </div>
+        <div class="card-section">
+          <div class="section-title">Gameplay</div>
+          <div class="row">
+            <div class="col-6 col-md-2 info-col"><div class="info-value" id="timeAlive">-</div><div class="info-label">Time Alive</div></div>
+            <div class="col-6 col-md-2 info-col"><div class="info-value" id="boosts">-</div><div class="info-label">Boosts</div></div>
+            <div class="col-6 col-md-2 info-col"><div class="info-value" id="heals">-</div><div class="info-label">Heals</div></div>
+            <div class="col-6 col-md-2 info-col"><div class="info-value" id="weaponsAcquired">-</div><div class="info-label">Weapons Acquired</div></div>
+            <div class="col-6 col-md-2 info-col"><div class="info-value" id="traveled">-</div><div class="info-label">Traveled</div></div>
+            <div class="col-6 col-md-2 info-col"><div class="info-value" id="walked">-</div><div class="info-label">Walked</div></div>
+            <div class="col-6 col-md-2 info-col"><div class="info-value" id="vehicle">-</div><div class="info-label">Traveled by Vehicle</div></div>
+            <div class="col-6 col-md-2 info-col"><div class="info-value" id="swim">-</div><div class="info-label">Traveled by Swim</div></div>
+          </div>
+        </div>
+      </div>
+      <div id="perf-error" class="text-danger text-center" style="margin-top:24px;display:none;"></div>
+    </div>
+    <!-- Team Stats -->
+    <div id="team-section" style="display:none;">
+      <div id="team-loading" class="text-center loading-spinner">
+        <div class="spinner-border text-danger"></div>
+        <div>Loading Team Stats...</div>
+      </div>
+      <div id="team-content" style="display:none;"></div>
+      <div id="team-error" class="text-danger text-center" style="margin-top:24px;display:none;"></div>
+    </div>
+    <!-- Rankings -->
+    <div id="rank-section" style="display:none;">
+      <!-- ปุ่มเปรียบเทียบ -->
+      <div class="mb-3 d-flex justify-content-end gap-2">
+        <button id="compareModeBtn" class="btn btn-outline-primary btn-sm" onclick="toggleCompareMode()">เปรียบเทียบผู้เล่น</button>
+        <button id="teamCompareModeBtn" class="btn btn-outline-success btn-sm" onclick="toggleTeamCompareMode()">เปรียบเทียบทีม</button>
+      </div>
+      <div id="rank-loading" class="text-center loading-spinner">
+        <div class="spinner-border text-success"></div>
+        <div>Loading Rankings...</div>
+      </div>
+      <div id="rank-content" style="display:none;"></div>
+      <div id="rank-error" class="text-danger text-center" style="margin-top:24px;display:none;"></div>
+      <!-- Modal Compare 1v1 -->
+      <div class="modal fade" id="compareModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+          <div class="modal-content p-3">
+            <div class="modal-header pb-0 border-0">
+              <h5 class="modal-title">ผลเปรียบเทียบผู้เล่น</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div id="compareResult"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Modal Compare Team -->
+      <div class="modal fade" id="teamCompareModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+          <div class="modal-content p-3">
+            <div class="modal-header pb-0 border-0">
+              <h5 class="modal-title">ผลเปรียบเทียบทีม</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div id="teamCompareResult"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+<script>
+const MAP_NAME_TABLE = {
+  "Baltic_Main": "Erangel",
+  "Erangel_Main": "Erangel",
+  "Desert_Main": "Miramar",
+  "Savage_Main": "Sanhok",
+  "DihorOtok_Main": "Vikendi",
+  "Taego_Main": "Taego",
+  "Tiger_Main": "Taego",
+  "Kiki_Main": "Deston",
+  "Paramo_Main": "Paramo",
+  "Haven_Main": "Haven",
+  "Karakin_Main": "Karakin"
+};
+function prettyMapName(code) { return MAP_NAME_TABLE[code] || code || "-"; }
+function getQueryParam(key) {
+  let url = new URL(window.location.href);
+  return url.searchParams.get(key);
+}
+// Back Button
+(function() {
+  const player = getQueryParam("search") || getQueryParam("player") || "";
+  if (player) {
+    document.getElementById('back-btn-wrap').innerHTML = `
+      <a href="index.html?search=${encodeURIComponent(player)}" class="btn btn-outline-secondary mb-3" style="border-radius:16px;">&larr; Back to Home</a>
+    `;
+  }
+})();
+
+// Tabs
+function showTab(tab) {
+  document.getElementById('perf-section').style.display = (tab === 'perf') ? '' : 'none';
+  document.getElementById('team-section').style.display = (tab === 'team') ? '' : 'none';
+  document.getElementById('rank-section').style.display = (tab === 'rank') ? '' : 'none';
+  document.getElementById('tab-perf').classList.toggle('active', tab === 'perf');
+  document.getElementById('tab-team').classList.toggle('active', tab === 'team');
+  document.getElementById('tab-rank').classList.toggle('active', tab === 'rank');
+  if (tab === 'team') loadTeamStats();
+  if (tab === 'rank') loadRankings();
+}
+
+// Performance tab (เหมือนเดิม)
+async function loadPerformance() {
+  const match_id = getQueryParam("match_id");
+  const player = getQueryParam("player");
+  if (!match_id || !player) {
+    document.getElementById("perf-loading").style.display = "none";
+    document.getElementById("perf-error").style.display = "block";
+    document.getElementById("perf-error").innerText = "No match or player info in URL.";
+    return;
+  }
+  try {
+    const res = await fetch(`/api/match/${match_id}?player=${encodeURIComponent(player)}`);
+    if (!res.ok) throw new Error("No data found");
+    const data = await res.json();
+    document.getElementById("host-server").innerText = data.server || "Steam";
+    document.getElementById("map-name").innerText = prettyMapName(data.map);
+
+    document.getElementById("damage").innerText = data.damage ?? "-";
+    document.getElementById("kills").innerText = data.kills ?? "-";
+    document.getElementById("headshots").innerText = data.headshots ?? "-";
+    document.getElementById("assists").innerText = data.assists ?? "-";
+    document.getElementById("roadKills").innerText = data.roadKills ?? "-";
+    document.getElementById("vehiclesDestroyed").innerText = data.vehiclesDestroyed ?? "-";
+    document.getElementById("dbnos").innerText = data.dbnos ?? "-";
+    document.getElementById("revives").innerText = data.revives ?? "-";
+
+    document.getElementById("timeAlive").innerText = data.timeAlive ?? "-";
+    document.getElementById("boosts").innerText = data.boosts ?? "-";
+    document.getElementById("heals").innerText = data.heals ?? "-";
+    document.getElementById("weaponsAcquired").innerText = data.weaponsAcquired ?? "-";
+    document.getElementById("traveled").innerText = data.traveled ?? "-";
+    document.getElementById("walked").innerText = data.walked ?? "-";
+    document.getElementById("vehicle").innerText = data.vehicle ?? "-";
+    document.getElementById("swim").innerText = data.swim ?? "-";
+
+    document.getElementById("perf-loading").style.display = "none";
+    document.getElementById("perf-content").style.display = "block";
+  } catch(e) {
+    document.getElementById("perf-loading").style.display = "none";
+    document.getElementById("perf-error").style.display = "block";
+    document.getElementById("perf-error").innerText = "Cannot load match data.";
+  }
+}
+
+// Team Stats tab (ปรับตาราง)
+async function loadTeamStats() {
+  const match_id = getQueryParam("match_id");
+  const player = getQueryParam("player");
+  document.getElementById('team-loading').style.display = "";
+  document.getElementById('team-content').style.display = "none";
+  document.getElementById('team-error').style.display = "none";
+  try {
+    const res = await fetch(`/api/teamstats/${match_id}?player=${encodeURIComponent(player)}`);
+    if (!res.ok) throw new Error("No team data");
+    const data = await res.json();
+    let overview = `
+      <div class="mb-3 p-2 border rounded" style="background:#fafbfe;">
+        <span class="fs-4 fw-bold text-primary me-2">#${data.team_rank ?? "-"}</span>
+        <span class="mx-2 fw-bold">${data.total_kills}</span> <span class="text-muted">Total Kills</span>
+        <span class="mx-4 fw-bold">${data.total_damage}</span> <span class="text-muted">Total damage</span>
+        <span class="mx-4 fw-bold">${data.avg_distance}m</span> <span class="text-muted">Avg. Distance</span>
+      </div>
+    `;
+    let members = data.members.map(m => `
+      <tr${m.name === data.player ? ' class="main-player"' : ''}>
+        <td>${m.name}</td>
+        <td>${m.weapon}</td>
+        <td>${m.kills || 0}</td>
+        <td>${m.headshots ?? "-"}</td>
+        <td>${m.assists ?? "-"}</td>
+        <td><span style="color:${m.damage > 0 ? '#e03' : '#888'}">${m.damage}</span></td>
+        <td>${m.dbnos || "-"}</td>
+        <td><span style="color:${parseFloat(m.traveled)>4 ? '#e03':'#888'}">${m.traveled}</span></td>
+        <td>${m.longest ?? "-"}</td>
+        <td>${m.timeAlive ?? "-"}</td>
+      </tr>
+    `).join("");
+    let table = `
+      <div class="table-responsive">
+        <table class="table table-bordered table-sm align-middle text-center team-table">
+          <thead>
+            <tr>
+              <th>Members</th><th>Weapon</th><th>Kills</th><th>HS</th><th>Assists</th>
+              <th>Damage</th><th>DBNOs</th><th>Traveled</th><th>Longest</th><th>Time Alive</th>
+            </tr>
+          </thead>
+          <tbody>${members}</tbody>
+        </table>
+      </div>
+    `;
+    document.getElementById('team-loading').style.display = "none";
+    document.getElementById('team-content').style.display = "";
+    document.getElementById('team-content').innerHTML = `
+      <div class="section-title mb-2">Team Overview</div>
+      ${overview}
+      ${table}
+    `;
+  } catch(e) {
+    document.getElementById('team-loading').style.display = "none";
+    document.getElementById('team-error').style.display = "block";
+    document.getElementById('team-error').innerText = "Cannot load team stats.";
+  }
+}
+
+// -------------- ฟีเจอร์ Compare (1v1 และ Team) -----------------
+let compareMode = false, teamCompareMode = false, globalRankings = [];
+function toggleCompareMode() {
+  compareMode = !compareMode;
+  teamCompareMode = false;
+  document.getElementById("compareModeBtn").classList.toggle("btn-primary", compareMode);
+  document.getElementById("compareModeBtn").classList.toggle("btn-outline-primary", !compareMode);
+  document.getElementById("teamCompareModeBtn").classList.remove("btn-success");
+  document.getElementById("teamCompareModeBtn").classList.add("btn-outline-success");
+  renderRankingsTable();
+}
+function toggleTeamCompareMode() {
+  teamCompareMode = !teamCompareMode;
+  compareMode = false;
+  document.getElementById("teamCompareModeBtn").classList.toggle("btn-success", teamCompareMode);
+  document.getElementById("teamCompareModeBtn").classList.toggle("btn-outline-success", !teamCompareMode);
+  document.getElementById("compareModeBtn").classList.remove("btn-primary");
+  document.getElementById("compareModeBtn").classList.add("btn-outline-primary");
+  renderRankingsTable();
+}
+
+function getPlayer() { return getQueryParam("player") || ""; }
+function getMyTeamId() {
+  const me = globalRankings.find(r => r.name.toLowerCase() === getPlayer().toLowerCase());
+  return me ? me.teamId : null;
+}
+
+function loadRankings() {
+  const match_id = getQueryParam("match_id");
+  const player = getPlayer();
+  document.getElementById('rank-loading').style.display = "";
+  document.getElementById('rank-content').style.display = "none";
+  document.getElementById('rank-error').style.display = "none";
+  fetch(`/api/rankings/${match_id}?player=${encodeURIComponent(player)}`)
+    .then(res => res.json())
+    .then(data => {
+      // เพิ่ม teamId จากชื่อ/ทีมเดียวกัน
+      let rankings = data.rankings;
+      let teamGroup = {};
+      let tid = 1;
+      rankings.forEach(r => {
+        let key = r.name.replace(/[^A-Za-z0-9]/g, "");
+        if (!teamGroup[r.team] && r.team) {
+          teamGroup[r.team] = "T"+(tid++);
+        }
+        r.teamId = teamGroup[r.team] || "T"+(tid-1);
+      });
+      globalRankings = rankings;
+      renderRankingsTable();
+    }).catch(e => {
+      document.getElementById('rank-loading').style.display = "none";
+      document.getElementById('rank-error').style.display = "block";
+      document.getElementById('rank-error').innerText = "Cannot load rankings.";
+    });
+}
+
+function renderRankingsTable() {
+  if (!globalRankings.length) return;
+  let player = getPlayer();
+  let html = `<div class="table-responsive"><table class="table table-bordered table-sm align-middle text-center rank-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Nick</th>
+        <th>Weapon</th>
+        <th>Kills</th>
+        <th>HS</th>
+        <th>Assists</th>
+        <th>Damage</th>
+        <th>DBNOs</th>
+        <th>Traveled</th>
+        <th>Tier</th>
+        <th>Survived</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>`;
+  let lastTeamId = null;
+  for(let i=0;i<globalRankings.length;i++) {
+    let r = globalRankings[i];
+    let isMine = r.name.toLowerCase() === player.toLowerCase();
+    let teamChange = (i===0 || r.teamId !== lastTeamId);
+    // เพิ่มแถบแบ่งทีมเป็นแถวเว้นว่าง
+    if (teamChange && i !== 0) {
+      html += `<tr class="rank-team-divider"><td colspan="12" style="background:#fff !important; height:18px; border:none;"></td></tr>`;
+    }
+    html += `<tr data-teamid="${r.teamId}" class="${isMine?"active-row":""}">
+      <td>${r.rank}</td>
+      <td>${r.name}${r.alive ? ' <span class="badge bg-warning text-dark">Alive</span>' : ''}</td>
+      <td>${r.weapon}</td>
+      <td>${r.kills || 0}</td>
+      <td>${r.headshots ?? "-"}</td>
+      <td>${r.assists ?? "-"}</td>
+      <td><span style="color:${r.damage > 0 ? '#e03' : '#888'}">${r.damage}</span></td>
+      <td>${r.dbnos || "-"}</td>
+      <td>${r.traveled ?? '-'}</td>
+      <td>${r.tier ?? '-'}</td>
+      <td>${r.timeAlive ?? '-'}</td>
+      <td>`;
+    // Compare mode
+    if (compareMode && !isMine) {
+      html += `<button class="btn btn-outline-primary btn-xs" onclick="showCompareModal('${player}','${r.name}')">Compare</button>`;
+    }
+    // Team compare mode (เฉพาะหัวทีม)
+    if (teamCompareMode && teamChange && r.teamId !== getMyTeamId()) {
+      html += `<button class="btn btn-outline-danger btn-xs" onclick="compareTeam('${r.teamId}')">Compare</button>`;
+    }
+    html += `</td></tr>`;
+    lastTeamId = r.teamId;
+  }
+  html += "</tbody></table></div>";
+  document.getElementById('rank-loading').style.display = "none";
+  document.getElementById('rank-content').style.display = "";
+  document.getElementById('rank-content').innerHTML = html;
+}
+
+function showCompareModal(player1, player2) {
+  // ในโปรดักชั่นให้ fetch API จริง, demo เป็น mock
+  fetch(`/api/playercompare?player1=${encodeURIComponent(player1)}&player2=${encodeURIComponent(player2)}`)
+    .then(res=>res.json())
+    .then(data=>{
+      const stat1 = data.player1;
+      const stat2 = data.player2;
+      const win1 = data.win1, win2 = data.win2;
+      document.getElementById("compareResult").innerHTML = `
+        <div class="row align-items-center">
+          <div class="col-5 text-center">
+            <div class="fw-bold fs-5 mb-2">${stat1.name}</div>
+            <div>Tier: <span class="badge bg-primary">${stat1.tier}</span></div>
+            <div>K/D: <b>${stat1.kd}</b></div>
+            <div>Damage: <b>${stat1.damage}</b></div>
+            <div>Survived: <b>${stat1.survived}</b></div>
+          </div>
+          <div class="col-2 text-center">
+            <canvas id="comparePie" width="110" height="110"></canvas>
+            <div class="mt-2"><span class="fw-bold text-success">${win1}%</span> vs <span class="fw-bold text-danger">${win2}%</span></div>
+          </div>
+          <div class="col-5 text-center">
+            <div class="fw-bold fs-5 mb-2">${stat2.name}</div>
+            <div>Tier: <span class="badge bg-warning text-dark">${stat2.tier}</span></div>
+            <div>K/D: <b>${stat2.kd}</b></div>
+            <div>Damage: <b>${stat2.damage}</b></div>
+            <div>Survived: <b>${stat2.survived}</b></div>
+          </div>
+        </div>
+      `;
+      const modal = new bootstrap.Modal(document.getElementById("compareModal"));
+      modal.show();
+      setTimeout(() => {
+        const ctx = document.getElementById('comparePie').getContext('2d');
+        new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels: [stat1.name, stat2.name],
+            datasets: [{
+              data: [win1, win2],
+              backgroundColor: ['#36a2eb','#f45b69'],
+              borderWidth: 1
+            }]
+          },
+          options: {
+            cutout: "75%",
+            plugins: {legend: {display: false}},
+            animation: false
+          }
+        });
+      }, 200);
+    });
+}
+
+function compareTeam(teamId2) {
+  const myTeamId = getMyTeamId();
+  const team1 = globalRankings.filter(r => r.teamId === myTeamId).map(r => r.name);
+  const team2 = globalRankings.filter(r => r.teamId === teamId2).map(r => r.name);
+  fetch(`/api/teamcompare?team1=${team1.join(",")}&team2=${team2.join(",")}`)
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("teamCompareResult").innerHTML = `
+        <div class="row align-items-center">
+          <div class="col-5 text-center">
+            <div class="fw-bold fs-5 mb-2">${data.team1.name || "Team 1"}</div>
+            <div>Tier: <span class="badge bg-primary">${data.team1.tier}</span></div>
+            <div>K/D: <b>${data.team1.kd}</b></div>
+            <div>Damage: <b>${data.team1.damage}</b></div>
+            <div>Survived: <b>${data.team1.survived}</b></div>
+            <div class="mt-2 small">${data.members1.map(m=>m).join(", ")}</div>
+          </div>
+          <div class="col-2 text-center">
+            <canvas id="teamComparePie" width="110" height="110"></canvas>
+            <div class="mt-2"><span class="fw-bold text-success">${data.win1}%</span> vs <span class="fw-bold text-danger">${data.win2}%</span></div>
+          </div>
+          <div class="col-5 text-center">
+            <div class="fw-bold fs-5 mb-2">${data.team2.name || "Team 2"}</div>
+            <div>Tier: <span class="badge bg-warning text-dark">${data.team2.tier}</span></div>
+            <div>K/D: <b>${data.team2.kd}</b></div>
+            <div>Damage: <b>${data.team2.damage}</b></div>
+            <div>Survived: <b>${data.team2.survived}</b></div>
+            <div class="mt-2 small">${data.members2.map(m=>m).join(", ")}</div>
+          </div>
+        </div>
+      `;
+      const modal = new bootstrap.Modal(document.getElementById("teamCompareModal"));
+      modal.show();
+      setTimeout(() => {
+        const ctx = document.getElementById('teamComparePie').getContext('2d');
+        new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels: [data.team1.name, data.team2.name],
+            datasets: [{
+              data: [data.win1, data.win2],
+              backgroundColor: ['#36a2eb','#f45b69'],
+              borderWidth: 1
+            }]
+          },
+          options: {
+            cutout: "75%",
+            plugins: {legend: {display: false}},
+            animation: false
+          }
+        });
+      }, 200);
+    });
+}
+
+// ------------- Initial load
+window.onload = function() {
+  showTab('perf');
+  loadPerformance();
+}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
