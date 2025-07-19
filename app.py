@@ -3,7 +3,7 @@ import requests
 
 app = Flask(__name__, static_folder="")
 
-PUBG_API_KEY = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiJmNWJkMmFhMC00NmFiLTAxM2UtYWZmZC02ZThjNzIzMTJmZDIiLCJpc3MiOiJnYW1lbG9ja2VyIiwiaWF0IjoxNzUyOTE1MjkzLCJwdWIiOiJibHVlaG9sZSIsInRpdGxlIjoicHViZyIsImFwcCI6InBlcmZvcm1hbmNlLWFuIn0.LOqXQphW7_738pAyoPnjNFSuMvfjNAS4pFYIMSSsTEw"  # <-- ใส่ KEY จริงของคุณ
+PUBG_API_KEY = "<YOUR_PUBG_KEY>"  # --- ใส่ KEY จริงของคุณ
 PUBG_BASE = "https://api.pubg.com/shards/steam"
 HEADERS = {
     "Authorization": f"Bearer {PUBG_API_KEY}",
@@ -12,15 +12,17 @@ HEADERS = {
 
 def get_player_id(player_name):
     url = f"{PUBG_BASE}/players?filter[playerNames]={player_name}"
-    r = requests.get(url, headers=HEADERS)
+    print("GET:", url)
+    r = requests.get(url, headers=HEADERS, timeout=15)
+    print("Status:", r.status_code)
     data = r.json()
     if "data" in data and data["data"]:
         return data["data"][0]["id"], data["data"][0]["attributes"]["name"]
     return None, None
 
-def get_recent_match_ids(player_id, max_matches=5):   # <<--- MAX 5!
+def get_recent_match_ids(player_id, max_matches=5):
     url = f"{PUBG_BASE}/players/{player_id}"
-    r = requests.get(url, headers=HEADERS)
+    r = requests.get(url, headers=HEADERS, timeout=15)
     data = r.json()
     matches = data.get("data", {}).get("relationships", {}).get("matches", {}).get("data", [])
     return [m["id"] for m in matches][:max_matches]
@@ -62,7 +64,7 @@ def parse_player_stats(match_json, player_name):
 
 def get_match_info(match_id, player_name):
     url = f"{PUBG_BASE}/matches/{match_id}"
-    r = requests.get(url, headers=HEADERS)
+    r = requests.get(url, headers=HEADERS, timeout=15)
     mdata = r.json()
     match_info = mdata["data"]["attributes"]
     mode = match_info.get("gameMode", "-")
@@ -79,11 +81,11 @@ def get_match_info(match_id, player_name):
 @app.route("/api/matches/<player_name>")
 def api_matches(player_name):
     page = int(request.args.get("page", 0))
-    PER_PAGE = 5  # <<--- ดึง 5 ต่อ page
+    PER_PAGE = 5  # ดึง 5 ต่อ page
     pid, pname = get_player_id(player_name)
     if not pid:
         return jsonify({"matches": []})
-    match_ids = get_recent_match_ids(pid, max_matches=5)  # <<--- ดึง 5 ล่าสุด
+    match_ids = get_recent_match_ids(pid, max_matches=5)
     page_ids = match_ids[page*PER_PAGE:(page+1)*PER_PAGE]
     matches = []
     for mid in page_ids:
@@ -109,7 +111,7 @@ def match_detail(match_id):
         return jsonify({"error": "missing player param"}), 400
 
     url = f"{PUBG_BASE}/matches/{match_id}"
-    resp = requests.get(url, headers=HEADERS)
+    resp = requests.get(url, headers=HEADERS, timeout=15)
     if resp.status_code != 200:
         return jsonify({"error": "match not found"}), 404
     data = resp.json()
@@ -152,7 +154,7 @@ def match_detail(match_id):
 def team_stats(match_id):
     player = request.args.get("player", "")
     url = f"{PUBG_BASE}/matches/{match_id}"
-    resp = requests.get(url, headers=HEADERS)
+    resp = requests.get(url, headers=HEADERS, timeout=15)
     if resp.status_code != 200:
         return jsonify({"error": "match not found"}), 404
     data = resp.json()
@@ -243,7 +245,7 @@ def get_tier_from_stats(stats):
 def total_rankings(match_id):
     player = request.args.get("player", "")
     url = f"{PUBG_BASE}/matches/{match_id}"
-    resp = requests.get(url, headers=HEADERS)
+    resp = requests.get(url, headers=HEADERS, timeout=15)
     if resp.status_code != 200:
         return jsonify({"error": "match not found"}), 404
     data = resp.json()
@@ -295,7 +297,7 @@ def api_player_compare():
         kills, damage, survived = 0, 0, 0
         for mid in mids:
             url = f"{PUBG_BASE}/matches/{mid}"
-            r = requests.get(url, headers=HEADERS)
+            r = requests.get(url, headers=HEADERS, timeout=15)
             if r.status_code != 200: continue
             mdata = r.json()
             for part in mdata.get("included", []):
@@ -334,7 +336,7 @@ def api_team_compare():
             k,d,s = 0,0,0
             for mid in mids:
                 url = f"{PUBG_BASE}/matches/{mid}"
-                r = requests.get(url, headers=HEADERS)
+                r = requests.get(url, headers=HEADERS, timeout=15)
                 if r.status_code != 200: continue
                 mdata = r.json()
                 for part in mdata.get("included", []):
@@ -353,35 +355,4 @@ def api_team_compare():
         avg_damage = int(damage/(count or 1))
         avg_survived = f"{int((survived/(count or 1))//60)}m"
         tier = get_tier_from_stats({"damage":avg_damage, "kd":avg_kd})
-        return {"name": " / ".join(members[:2]) + (" ..." if len(members)>2 else ""), "kd": avg_kd, "damage": avg_damage, "survived": avg_survived, "tier": tier, "members": members}
-    t1 = get_team_stats(team1)
-    t2 = get_team_stats(team2)
-    tier_order = ["E","D","C","B","A","S","SS","SSS"]
-    win1 = 50 + 10*(tier_order.index(t1["tier"])-tier_order.index(t2["tier"]))
-    win1 = min(max(win1,5),95)
-    win2 = 100 - win1
-    return jsonify({"team1":t1,"team2":t2,"win1":win1,"win2":win2, "members1": t1["members"], "members2": t2["members"]})
-
-def get_player_id(player_name):
-    url = f"{PUBG_BASE}/players?filter[playerNames]={player_name}"
-    print("GET:", url)
-    r = requests.get(url, headers=HEADERS, timeout=15)
-    print("Status:", r.status_code)
-    data = r.json()
-    print("Data:", data)
-    if "data" in data and data["data"]:
-        return data["data"][0]["id"], data["data"][0]["attributes"]["name"]
-    return None, None
-
-
-# --- Static ---
-@app.route("/")
-def root():
-    return send_from_directory(".", "index.html")
-@app.route("/<path:path>")
-def static_files(path):
-    return send_from_directory(".", path)
-
-if __name__ == "__main__":
-    # เพิ่ม host='0.0.0.0' และ threaded=True เพื่อรองรับหลาย request และเข้าถึงจาก network อื่นได้
-    app.run(debug=True, host="0.0.0.0", port=5000, threaded=True)
+        return {"name": " / ".join(members[:2]) + (" ..." if len(members)>2 else
