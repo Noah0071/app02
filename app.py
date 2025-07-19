@@ -3,7 +3,7 @@ import requests
 
 app = Flask(__name__, static_folder="")
 
-PUBG_API_KEY = "<YOUR_PUBG_KEY>"  # --- ใส่ KEY จริงของคุณ
+PUBG_API_KEY = "ใส่_KEY_ของคุณ"
 PUBG_BASE = "https://api.pubg.com/shards/steam"
 HEADERS = {
     "Authorization": f"Bearer {PUBG_API_KEY}",
@@ -12,17 +12,15 @@ HEADERS = {
 
 def get_player_id(player_name):
     url = f"{PUBG_BASE}/players?filter[playerNames]={player_name}"
-    print("GET:", url)
-    r = requests.get(url, headers=HEADERS, timeout=15)
-    print("Status:", r.status_code)
+    r = requests.get(url, headers=HEADERS)
     data = r.json()
     if "data" in data and data["data"]:
         return data["data"][0]["id"], data["data"][0]["attributes"]["name"]
     return None, None
 
-def get_recent_match_ids(player_id, max_matches=5):
+def get_recent_match_ids(player_id, max_matches=5):  # <--- 5 match limit
     url = f"{PUBG_BASE}/players/{player_id}"
-    r = requests.get(url, headers=HEADERS, timeout=15)
+    r = requests.get(url, headers=HEADERS)
     data = r.json()
     matches = data.get("data", {}).get("relationships", {}).get("matches", {}).get("data", [])
     return [m["id"] for m in matches][:max_matches]
@@ -64,7 +62,7 @@ def parse_player_stats(match_json, player_name):
 
 def get_match_info(match_id, player_name):
     url = f"{PUBG_BASE}/matches/{match_id}"
-    r = requests.get(url, headers=HEADERS, timeout=15)
+    r = requests.get(url, headers=HEADERS)
     mdata = r.json()
     match_info = mdata["data"]["attributes"]
     mode = match_info.get("gameMode", "-")
@@ -81,7 +79,7 @@ def get_match_info(match_id, player_name):
 @app.route("/api/matches/<player_name>")
 def api_matches(player_name):
     page = int(request.args.get("page", 0))
-    PER_PAGE = 5  # ดึง 5 ต่อ page
+    PER_PAGE = 5  # 5 matches per page
     pid, pname = get_player_id(player_name)
     if not pid:
         return jsonify({"matches": []})
@@ -111,7 +109,7 @@ def match_detail(match_id):
         return jsonify({"error": "missing player param"}), 400
 
     url = f"{PUBG_BASE}/matches/{match_id}"
-    resp = requests.get(url, headers=HEADERS, timeout=15)
+    resp = requests.get(url, headers=HEADERS)
     if resp.status_code != 200:
         return jsonify({"error": "match not found"}), 404
     data = resp.json()
@@ -149,12 +147,12 @@ def match_detail(match_id):
     }
     return jsonify(result)
 
-# --- Team Stats ---
+# ---------------- Team stats (เหมือนเดิม) ----------------
 @app.route("/api/teamstats/<match_id>")
 def team_stats(match_id):
     player = request.args.get("player", "")
     url = f"{PUBG_BASE}/matches/{match_id}"
-    resp = requests.get(url, headers=HEADERS, timeout=15)
+    resp = requests.get(url, headers=HEADERS)
     if resp.status_code != 200:
         return jsonify({"error": "match not found"}), 404
     data = resp.json()
@@ -228,24 +226,12 @@ def team_stats(match_id):
         "player": player
     })
 
-# --- Tier Logic ---
-def get_tier_from_stats(stats):
-    dmg = stats.get("damage", 0)
-    kd = stats.get("kd", 1)
-    if dmg > 800 and kd > 2: return "SSS"
-    if dmg > 600 and kd > 1.5: return "SS"
-    if dmg > 400: return "S"
-    if dmg > 250: return "A"
-    if dmg > 150: return "B"
-    if dmg > 90: return "C"
-    return "D"
-
-# --- Rankings (ส่ง tier ไปด้วย ใช้ tier นี้แทนช่อง Longest) ---
+# ----------------- Total Rankings (เพิ่ม field team สำหรับ team compare) -----------------
 @app.route("/api/rankings/<match_id>")
 def total_rankings(match_id):
     player = request.args.get("player", "")
     url = f"{PUBG_BASE}/matches/{match_id}"
-    resp = requests.get(url, headers=HEADERS, timeout=15)
+    resp = requests.get(url, headers=HEADERS)
     if resp.status_code != 200:
         return jsonify({"error": "match not found"}), 404
     data = resp.json()
@@ -259,32 +245,56 @@ def total_rankings(match_id):
     for obj in included:
         if obj["type"] == "participant":
             s = obj["attributes"]["stats"]
-            damage = int(s.get("damageDealt", 0))
-            kills = s.get("kills", 0)
-            kd = kills  # สมมติเป็น avg kill/game (เพราะ 1 เกม)
-            tier = get_tier_from_stats({"damage": damage, "kd": kd})
             participants.append({
                 "name": s.get("name", "-"),
                 "weapon": s.get("most_damage_cause", "-"),
-                "kills": kills,
+                "kills": s.get("kills", 0),
                 "headshots": s.get("headshotKills", 0),
                 "assists": s.get("assists", 0),
-                "damage": damage,
+                "damage": int(s.get("damageDealt", 0)),
                 "dbnos": s.get("DBNOs", 0),
                 "traveled": f"{((s.get('rideDistance',0)+s.get('walkDistance',0))/1000):.2f}km",
-                "tier": tier,
+                # "longest": f"{int(s.get('longestTimeSurvived',0)//60)}m" if s.get('longestTimeSurvived', 0) else "-",
+                "longest": "-",  # จะแก้ตรงนี้ด้านล่าง
                 "timeAlive": f"{int(s.get('timeSurvived',0)//60):02d}:{int(s.get('timeSurvived',0)%60):02d}",
                 "rank": s.get("winPlace", 999),
                 "alive": s.get("DBNOs", 0) == 0 and s.get("winPlace", 999) == 1,
                 "team": roster_part.get(obj["id"], "-")
             })
+    # เติม Tier แทน longest
+    for p in participants:
+        dmg = p["damage"]
+        kd = p["kills"]
+        # Simple tier (ปรับตาม logic ได้)
+        if dmg > 800 and kd > 2: tier = "SSS"
+        elif dmg > 600 and kd > 1.5: tier = "SS"
+        elif dmg > 400: tier = "S"
+        elif dmg > 250: tier = "A"
+        elif dmg > 150: tier = "B"
+        elif dmg > 90: tier = "C"
+        else: tier = "D"
+        p["longest"] = tier
     participants.sort(key=lambda x: x["rank"])
     for idx, p in enumerate(participants, 1):
         p["no"] = idx
-        p["highlight"] = (p["name"].lower() == player.lower())
+        if p["name"].lower() == player.lower():
+            p["highlight"] = True
+        else:
+            p["highlight"] = False
     return jsonify({"rankings": participants, "player": player})
 
-# --- Compare 1v1 ---
+# ------------------ Compare 1v1 ------------------
+def get_tier_from_stats(stats):
+    dmg = stats.get("damage", 0)
+    kd = stats.get("kd", 0)
+    if dmg > 800 and kd > 2: return "SSS"
+    if dmg > 600 and kd > 1.5: return "SS"
+    if dmg > 400: return "S"
+    if dmg > 250: return "A"
+    if dmg > 150: return "B"
+    if dmg > 90: return "C"
+    return "D"
+
 @app.route("/api/playercompare")
 def api_player_compare():
     player1 = request.args.get("player1")
@@ -297,7 +307,7 @@ def api_player_compare():
         kills, damage, survived = 0, 0, 0
         for mid in mids:
             url = f"{PUBG_BASE}/matches/{mid}"
-            r = requests.get(url, headers=HEADERS, timeout=15)
+            r = requests.get(url, headers=HEADERS, timeout=10)
             if r.status_code != 200: continue
             mdata = r.json()
             for part in mdata.get("included", []):
@@ -318,10 +328,9 @@ def api_player_compare():
     win2 = 100 - win1
     return jsonify({"player1":stat1,"player2":stat2,"win1":win1,"win2":win2})
 
-# --- Compare Team ---
+# ------------------ Compare Team ------------------
 @app.route("/api/teamcompare")
 def api_team_compare():
-    # รับชื่อทีมจาก query string และกรองชื่อว่าง
     team1 = [n.strip() for n in request.args.get("team1", "").split(",") if n.strip()]
     team2 = [n.strip() for n in request.args.get("team2", "").split(",") if n.strip()]
     def get_team_stats(names):
@@ -336,7 +345,7 @@ def api_team_compare():
             k,d,s = 0,0,0
             for mid in mids:
                 url = f"{PUBG_BASE}/matches/{mid}"
-                r = requests.get(url, headers=HEADERS, timeout=15)
+                r = requests.get(url, headers=HEADERS, timeout=10)
                 if r.status_code != 200: continue
                 mdata = r.json()
                 for part in mdata.get("included", []):
@@ -355,4 +364,29 @@ def api_team_compare():
         avg_damage = int(damage/(count or 1))
         avg_survived = f"{int((survived/(count or 1))//60)}m"
         tier = get_tier_from_stats({"damage":avg_damage, "kd":avg_kd})
-        return {"name": " / ".join(members[:2]) + (" ..." if len(members)>2 else
+        return {
+            "name": " / ".join(members[:2]) + (" ..." if len(members)>2 else ""),
+            "kd": avg_kd,
+            "damage": avg_damage,
+            "survived": avg_survived,
+            "tier": tier,
+            "members": members
+        }
+    t1 = get_team_stats(team1)
+    t2 = get_team_stats(team2)
+    tier_order = ["E","D","C","B","A","S","SS","SSS"]
+    win1 = 50 + 10*(tier_order.index(t1["tier"])-tier_order.index(t2["tier"]))
+    win1 = min(max(win1,5),95)
+    win2 = 100 - win1
+    return jsonify({"team1":t1,"team2":t2,"win1":win1,"win2":win2, "members1": t1["members"], "members2": t2["members"]})
+
+# ------------- Static file serving -------------
+@app.route("/")
+def root():
+    return send_from_directory(".", "index.html")
+@app.route("/<path:path>")
+def static_files(path):
+    return send_from_directory(".", path)
+
+if __name__ == "__main__":
+    app.run(debug=True)
