@@ -3,7 +3,7 @@ import requests
 
 app = Flask(__name__, static_folder="")
 
-PUBG_API_KEY = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiJmNWJkMmFhMC00NmFiLTAxM2UtYWZmZC02ZThjNzIzMTJmZDIiLCJpc3MiOiJnYW1lbG9ja2VyIiwiaWF0IjoxNzUyOTE1MjkzLCJwdWIiOiJibHVlaG9sZSIsInRpdGxlIjoicHViZyIsImFwcCI6InBlcmZvcm1hbmNlLWFuIn0.LOqXQphW7_738pAyoPnjNFSuMvfjNAS4pFYIMSSsTEw"  # <-- ใส่ KEY จริงของคุณ
+PUBG_API_KEY = os.environ.get("PUBG_API_KEY")  # <-- ใส่ KEY จริงของคุณ
 PUBG_BASE = "https://api.pubg.com/shards/steam"
 HEADERS = {
     "Authorization": f"Bearer {PUBG_API_KEY}",
