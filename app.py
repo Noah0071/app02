@@ -1,658 +1,387 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Match Performance - PUBG</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body { background: linear-gradient(135deg, #e9efff 0%, #f6f8fb 100%); color: #232e3a; font-family: 'Segoe UI', 'Prompt', 'Kanit', sans-serif; }
-    .main-container {
-      max-width: 1200px;
-      margin: 48px auto 0 auto;
-      background: #fff;
-      border-radius: 22px;
-      box-shadow: 0 8px 32px 0 rgba(51,73,164,0.08), 0 1.5px 8px 0 rgba(0,0,0,0.03);
-      padding: 36px 28px 32px 28px;
-    }
-    .nav-tabs {
-      border-radius: 16px;
-      overflow: hidden;
-      background: #f3f6fd;
-      margin-bottom: 28px;
-      box-shadow: 0 2px 8px 0 rgba(51,73,164,0.04);
-    }
-    .nav-tabs .nav-link {
-      font-size: 1.08em;
-      color: #3349a4;
-      border: none;
-      border-radius: 0;
-      transition: background 0.2s, color 0.2s;
-      padding: 12px 28px;
-      font-weight: 500;
-    }
-    .nav-tabs .nav-link.active {
-      background: linear-gradient(90deg, #3349a4 60%, #5e7be2 100%) !important;
-      color: #fff !important;
-      font-weight: bold;
-      box-shadow: 0 2px 8px 0 rgba(51,73,164,0.08);
-    }
-    .section-title {
-      font-weight: bold;
-      color: #3349a4;
-      margin-top: 32px;
-      font-size: 1.35em;
-      letter-spacing: 0.5px;
-      margin-bottom: 16px;
-      border-left: 5px solid #5e7be2;
-      padding-left: 12px;
-    }
-    .info-label { color: #8b99ae; font-size: 0.98em; }
-    .info-value { font-size: 1.22em; font-weight: 600; color: #232e3a; }
-    .hr-dash { border: 0; border-top: 1.5px dashed #d2d8e6; margin: 26px 0 18px 0; }
-    .info-col { margin-bottom: 18px; }
-    .loading-spinner { padding: 90px 0 50px 0; }
-    .card-section {
-      background: #f8faff;
-      border-radius: 18px;
-      box-shadow: 0 2px 8px 0 rgba(51,73,164,0.04);
-      padding: 24px 18px 18px 18px;
-      margin-bottom: 18px;
-    }
-    .table-responsive { font-size: 1.01em;}
-    .table-sm th, .table-sm td { padding: 7px 10px !important;}
-    .table th { background: #f8f9fb;}
-    .table thead th { white-space: nowrap;}
-    .table-dark th { background: #232e3a !important; color: #fff; }
-    .active-row { background: #e9f0ff !important; font-weight: bold !important; }
-    .btn-xs { font-size: 0.85em; padding: 0.25em 1.1em;}
-    .btn-outline-primary, .btn-outline-success, .btn-outline-danger {
-      border-radius: 14px !important;
-      font-weight: 500;
-      transition: background 0.18s, color 0.18s;
-    }
-    .btn-outline-primary:hover, .btn-outline-success:hover, .btn-outline-danger:hover {
-      background: #3349a4 !important;
-      color: #fff !important;
-      border-color: #3349a4 !important;
-    }
-    .modal-content { border-radius: 18px; }
-    .badge { font-size: 1em; border-radius: 8px; }
-    .table-bordered { border-radius: 12px; overflow: hidden; }
-    .table tbody tr:hover { background: #f3f7ff !important; }
-    #back-btn-wrap .btn { border-radius: 14px; font-size: 1.04em; }
-    /* Team Stats Table */
-    .team-table thead th {
-      background: linear-gradient(90deg, #e9efff 60%, #f8faff 100%);
-      color: #3349a4;
-      font-weight: 600;
-      font-size: 1.07em;
-      border-bottom: 2px solid #b7c7e6;
-    }
-    .team-table tbody tr {
-      transition: background 0.18s;
-    }
-    .team-table tbody tr:hover {
-      background: #f3f7ff !important;
-    }
-    .team-table td, .team-table th {
-      vertical-align: middle !important;
-      border-color: #e3e8f0 !important;
-    }
-    .team-table .main-player {
-      background: #fff7f0 !important;
-      color: #d33 !important;
-      font-weight: bold;
-    }
-    .team-table {
-      border-radius: 14px;
-      overflow: hidden;
-      box-shadow: 0 2px 8px 0 rgba(51,73,164,0.04);
-      margin-bottom: 0;
-    }
-    /* Rankings Table */
-    .rank-table thead th {
-      background: linear-gradient(90deg, #232e3a 60%, #5e7be2 100%) !important;
-      color: #fff !important;
-      font-weight: 600;
-      font-size: 1.07em;
-      border-bottom: 2px solid #b7c7e6;
-    }
-    .rank-table tbody tr {
-      transition: background 0.18s;
-    }
-    .rank-table tbody tr:hover {
-      background: #f3f7ff !important;
-    }
-    .rank-table td, .rank-table th {
-      vertical-align: middle !important;
-      border-color: #e3e8f0 !important;
-    }
-    .rank-table .active-row {
-      background: #e9f0ff !important;
-      font-weight: bold !important;
-    }
-    .rank-team-divider td {
-      background: #f3f6fd !important;
-      color: #5e7be2 !important;
-      font-weight: 600;
-      font-size: 1.02em;
-      border-top: 2.5px solid #b7c7e6 !important;
-      border-bottom: 2.5px solid #b7c7e6 !important;
-      padding: 7px 0 !important;
-    }
-    @media (max-width: 900px) {
-      .main-container { padding: 18px 2vw 18px 2vw; }
-      .section-title { margin-top: 18px; font-size: 1.1em;}
-      .info-label, .info-value { font-size: 1em; }
-      .table-responsive { font-size: 0.97em;}
-    }
-    @media (max-width: 600px) {
-      .main-container { padding: 8px 0 8px 0; }
-      .section-title { font-size: 1em;}
-    }
-  </style>
-</head>
-<body>
-  <div class="main-container">
-    <!-- Back Button -->
-    <div id="back-btn-wrap"></div>
-    <ul class="nav nav-tabs mb-3" id="main-tabs">
-      <li class="nav-item"><a class="nav-link active" id="tab-perf" href="#" onclick="showTab('perf')">Performance</a></li>
-      <li class="nav-item"><a class="nav-link" id="tab-team" href="#" onclick="showTab('team')">Team Stats</a></li>
-      <li class="nav-item"><a class="nav-link" id="tab-rank" href="#" onclick="showTab('rank')">Total Rankings</a></li>
-      <li class="nav-item"><a class="nav-link" href="#" disabled>Kill Logs</a></li>
-    </ul>
-    <!-- Performance -->
-    <div id="perf-section">
-      <div id="perf-loading" class="text-center loading-spinner"><div class="spinner-border text-primary"></div><div>Loading...</div></div>
-      <div id="perf-content" style="display:none;">
-        <div class="card-section">
-          <div class="section-title">Rating / Ranks</div>
-          <div class="row mb-2">
-            <div class="col-6 col-md-3 info-col">
-              <div class="info-label">Host Server</div>
-              <div class="info-value" id="host-server">-</div>
-            </div>
-            <div class="col-6 col-md-3 info-col">
-              <div class="info-label">Map</div>
-              <div class="info-value" id="map-name">-</div>
-            </div>
-          </div>
-        </div>
-        <div class="card-section">
-          <div class="section-title">Combat</div>
-          <div class="row">
-            <div class="col-6 col-md-2 info-col"><div class="info-value" id="damage">-</div><div class="info-label">Combat</div></div>
-            <div class="col-6 col-md-2 info-col"><div class="info-value" id="kills">-</div><div class="info-label">Kills</div></div>
-            <div class="col-6 col-md-2 info-col"><div class="info-value" id="headshots">-</div><div class="info-label">Headshots</div></div>
-            <div class="col-6 col-md-2 info-col"><div class="info-value" id="assists">-</div><div class="info-label">Assists</div></div>
-            <div class="col-6 col-md-2 info-col"><div class="info-value" id="roadKills">-</div><div class="info-label">Road Kills</div></div>
-            <div class="col-6 col-md-2 info-col"><div class="info-value" id="vehiclesDestroyed">-</div><div class="info-label">Vehicles Destroyed</div></div>
-            <div class="col-6 col-md-2 info-col"><div class="info-value" id="dbnos">-</div><div class="info-label">DBNOs</div></div>
-            <div class="col-6 col-md-2 info-col"><div class="info-value" id="revives">-</div><div class="info-label">Revives</div></div>
-          </div>
-        </div>
-        <div class="card-section">
-          <div class="section-title">Gameplay</div>
-          <div class="row">
-            <div class="col-6 col-md-2 info-col"><div class="info-value" id="timeAlive">-</div><div class="info-label">Time Alive</div></div>
-            <div class="col-6 col-md-2 info-col"><div class="info-value" id="boosts">-</div><div class="info-label">Boosts</div></div>
-            <div class="col-6 col-md-2 info-col"><div class="info-value" id="heals">-</div><div class="info-label">Heals</div></div>
-            <div class="col-6 col-md-2 info-col"><div class="info-value" id="weaponsAcquired">-</div><div class="info-label">Weapons Acquired</div></div>
-            <div class="col-6 col-md-2 info-col"><div class="info-value" id="traveled">-</div><div class="info-label">Traveled</div></div>
-            <div class="col-6 col-md-2 info-col"><div class="info-value" id="walked">-</div><div class="info-label">Walked</div></div>
-            <div class="col-6 col-md-2 info-col"><div class="info-value" id="vehicle">-</div><div class="info-label">Traveled by Vehicle</div></div>
-            <div class="col-6 col-md-2 info-col"><div class="info-value" id="swim">-</div><div class="info-label">Traveled by Swim</div></div>
-          </div>
-        </div>
-      </div>
-      <div id="perf-error" class="text-danger text-center" style="margin-top:24px;display:none;"></div>
-    </div>
-    <!-- Team Stats -->
-    <div id="team-section" style="display:none;">
-      <div id="team-loading" class="text-center loading-spinner">
-        <div class="spinner-border text-danger"></div>
-        <div>Loading Team Stats...</div>
-      </div>
-      <div id="team-content" style="display:none;"></div>
-      <div id="team-error" class="text-danger text-center" style="margin-top:24px;display:none;"></div>
-    </div>
-    <!-- Rankings -->
-    <div id="rank-section" style="display:none;">
-      <!-- ปุ่มเปรียบเทียบ -->
-      <div class="mb-3 d-flex justify-content-end gap-2">
-        <button id="compareModeBtn" class="btn btn-outline-primary btn-sm" onclick="toggleCompareMode()">เปรียบเทียบผู้เล่น</button>
-        <button id="teamCompareModeBtn" class="btn btn-outline-success btn-sm" onclick="toggleTeamCompareMode()">เปรียบเทียบทีม</button>
-      </div>
-      <div id="rank-loading" class="text-center loading-spinner">
-        <div class="spinner-border text-success"></div>
-        <div>Loading Rankings...</div>
-      </div>
-      <div id="rank-content" style="display:none;"></div>
-      <div id="rank-error" class="text-danger text-center" style="margin-top:24px;display:none;"></div>
-      <!-- Modal Compare 1v1 -->
-      <div class="modal fade" id="compareModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-          <div class="modal-content p-3">
-            <div class="modal-header pb-0 border-0">
-              <h5 class="modal-title">ผลเปรียบเทียบผู้เล่น</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-              <div id="compareResult"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <!-- Modal Compare Team -->
-      <div class="modal fade" id="teamCompareModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-          <div class="modal-content p-3">
-            <div class="modal-header pb-0 border-0">
-              <h5 class="modal-title">ผลเปรียบเทียบทีม</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-              <div id="teamCompareResult"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-<script>
-const MAP_NAME_TABLE = {
-  "Baltic_Main": "Erangel",
-  "Erangel_Main": "Erangel",
-  "Desert_Main": "Miramar",
-  "Savage_Main": "Sanhok",
-  "DihorOtok_Main": "Vikendi",
-  "Taego_Main": "Taego",
-  "Tiger_Main": "Taego",
-  "Kiki_Main": "Deston",
-  "Paramo_Main": "Paramo",
-  "Haven_Main": "Haven",
-  "Karakin_Main": "Karakin"
-};
-function prettyMapName(code) { return MAP_NAME_TABLE[code] || code || "-"; }
-function getQueryParam(key) {
-  let url = new URL(window.location.href);
-  return url.searchParams.get(key);
-}
-// Back Button
-(function() {
-  const player = getQueryParam("search") || getQueryParam("player") || "";
-  if (player) {
-    document.getElementById('back-btn-wrap').innerHTML = `
-      <a href="index.html?search=${encodeURIComponent(player)}" class="btn btn-outline-secondary mb-3" style="border-radius:16px;">&larr; Back to Home</a>
-    `;
-  }
-})();
+from flask import Flask, jsonify, request, send_from_directory
+import requests
 
-// Tabs
-function showTab(tab) {
-  document.getElementById('perf-section').style.display = (tab === 'perf') ? '' : 'none';
-  document.getElementById('team-section').style.display = (tab === 'team') ? '' : 'none';
-  document.getElementById('rank-section').style.display = (tab === 'rank') ? '' : 'none';
-  document.getElementById('tab-perf').classList.toggle('active', tab === 'perf');
-  document.getElementById('tab-team').classList.toggle('active', tab === 'team');
-  document.getElementById('tab-rank').classList.toggle('active', tab === 'rank');
-  if (tab === 'team') loadTeamStats();
-  if (tab === 'rank') loadRankings();
+app = Flask(__name__, static_folder="")
+
+PUBG_API_KEY = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiJmNWJkMmFhMC00NmFiLTAxM2UtYWZmZC02ZThjNzIzMTJmZDIiLCJpc3MiOiJnYW1lbG9ja2VyIiwiaWF0IjoxNzUyOTE1MjkzLCJwdWIiOiJibHVlaG9sZSIsInRpdGxlIjoicHViZyIsImFwcCI6InBlcmZvcm1hbmNlLWFuIn0.LOqXQphW7_738pAyoPnjNFSuMvfjNAS4pFYIMSSsTEw"  # <-- ใส่ KEY จริงของคุณ
+PUBG_BASE = "https://api.pubg.com/shards/steam"
+HEADERS = {
+    "Authorization": f"Bearer {PUBG_API_KEY}",
+    "Accept": "application/vnd.api+json"
 }
 
-// Performance tab (เหมือนเดิม)
-async function loadPerformance() {
-  const match_id = getQueryParam("match_id");
-  const player = getQueryParam("player");
-  if (!match_id || !player) {
-    document.getElementById("perf-loading").style.display = "none";
-    document.getElementById("perf-error").style.display = "block";
-    document.getElementById("perf-error").innerText = "No match or player info in URL.";
-    return;
-  }
-  try {
-    const res = await fetch(`/api/match/${match_id}?player=${encodeURIComponent(player)}`);
-    if (!res.ok) throw new Error("No data found");
-    const data = await res.json();
-    document.getElementById("host-server").innerText = data.server || "Steam";
-    document.getElementById("map-name").innerText = prettyMapName(data.map);
+def get_player_id(player_name):
+    url = f"{PUBG_BASE}/players?filter[playerNames]={player_name}"
+    r = requests.get(url, headers=HEADERS)
+    data = r.json()
+    if "data" in data and data["data"]:
+        return data["data"][0]["id"], data["data"][0]["attributes"]["name"]
+    return None, None
 
-    document.getElementById("damage").innerText = data.damage ?? "-";
-    document.getElementById("kills").innerText = data.kills ?? "-";
-    document.getElementById("headshots").innerText = data.headshots ?? "-";
-    document.getElementById("assists").innerText = data.assists ?? "-";
-    document.getElementById("roadKills").innerText = data.roadKills ?? "-";
-    document.getElementById("vehiclesDestroyed").innerText = data.vehiclesDestroyed ?? "-";
-    document.getElementById("dbnos").innerText = data.dbnos ?? "-";
-    document.getElementById("revives").innerText = data.revives ?? "-";
+def get_recent_match_ids(player_id, max_matches=5):   # <<--- MAX 5!
+    url = f"{PUBG_BASE}/players/{player_id}"
+    r = requests.get(url, headers=HEADERS)
+    data = r.json()
+    matches = data.get("data", {}).get("relationships", {}).get("matches", {}).get("data", [])
+    return [m["id"] for m in matches][:max_matches]
 
-    document.getElementById("timeAlive").innerText = data.timeAlive ?? "-";
-    document.getElementById("boosts").innerText = data.boosts ?? "-";
-    document.getElementById("heals").innerText = data.heals ?? "-";
-    document.getElementById("weaponsAcquired").innerText = data.weaponsAcquired ?? "-";
-    document.getElementById("traveled").innerText = data.traveled ?? "-";
-    document.getElementById("walked").innerText = data.walked ?? "-";
-    document.getElementById("vehicle").innerText = data.vehicle ?? "-";
-    document.getElementById("swim").innerText = data.swim ?? "-";
-
-    document.getElementById("perf-loading").style.display = "none";
-    document.getElementById("perf-content").style.display = "block";
-  } catch(e) {
-    document.getElementById("perf-loading").style.display = "none";
-    document.getElementById("perf-error").style.display = "block";
-    document.getElementById("perf-error").innerText = "Cannot load match data.";
-  }
-}
-
-// Team Stats tab (ปรับตาราง)
-async function loadTeamStats() {
-  const match_id = getQueryParam("match_id");
-  const player = getQueryParam("player");
-  document.getElementById('team-loading').style.display = "";
-  document.getElementById('team-content').style.display = "none";
-  document.getElementById('team-error').style.display = "none";
-  try {
-    const res = await fetch(`/api/teamstats/${match_id}?player=${encodeURIComponent(player)}`);
-    if (!res.ok) throw new Error("No team data");
-    const data = await res.json();
-    let overview = `
-      <div class="mb-3 p-2 border rounded" style="background:#fafbfe;">
-        <span class="fs-4 fw-bold text-primary me-2">#${data.team_rank ?? "-"}</span>
-        <span class="mx-2 fw-bold">${data.total_kills}</span> <span class="text-muted">Total Kills</span>
-        <span class="mx-4 fw-bold">${data.total_damage}</span> <span class="text-muted">Total damage</span>
-        <span class="mx-4 fw-bold">${data.avg_distance}m</span> <span class="text-muted">Avg. Distance</span>
-      </div>
-    `;
-    let members = data.members.map(m => `
-      <tr${m.name === data.player ? ' class="main-player"' : ''}>
-        <td>${m.name}</td>
-        <td>${m.weapon}</td>
-        <td>${m.kills || 0}</td>
-        <td>${m.headshots ?? "-"}</td>
-        <td>${m.assists ?? "-"}</td>
-        <td><span style="color:${m.damage > 0 ? '#e03' : '#888'}">${m.damage}</span></td>
-        <td>${m.dbnos || "-"}</td>
-        <td><span style="color:${parseFloat(m.traveled)>4 ? '#e03':'#888'}">${m.traveled}</span></td>
-        <td>${m.longest ?? "-"}</td>
-        <td>${m.timeAlive ?? "-"}</td>
-      </tr>
-    `).join("");
-    let table = `
-      <div class="table-responsive">
-        <table class="table table-bordered table-sm align-middle text-center team-table">
-          <thead>
-            <tr>
-              <th>Members</th><th>Weapon</th><th>Kills</th><th>HS</th><th>Assists</th>
-              <th>Damage</th><th>DBNOs</th><th>Traveled</th><th>Longest</th><th>Time Alive</th>
-            </tr>
-          </thead>
-          <tbody>${members}</tbody>
-        </table>
-      </div>
-    `;
-    document.getElementById('team-loading').style.display = "none";
-    document.getElementById('team-content').style.display = "";
-    document.getElementById('team-content').innerHTML = `
-      <div class="section-title mb-2">Team Overview</div>
-      ${overview}
-      ${table}
-    `;
-  } catch(e) {
-    document.getElementById('team-loading').style.display = "none";
-    document.getElementById('team-error').style.display = "block";
-    document.getElementById('team-error').innerText = "Cannot load team stats.";
-  }
-}
-
-// -------------- ฟีเจอร์ Compare (1v1 และ Team) -----------------
-let compareMode = false, teamCompareMode = false, globalRankings = [];
-function toggleCompareMode() {
-  compareMode = !compareMode;
-  teamCompareMode = false;
-  document.getElementById("compareModeBtn").classList.toggle("btn-primary", compareMode);
-  document.getElementById("compareModeBtn").classList.toggle("btn-outline-primary", !compareMode);
-  document.getElementById("teamCompareModeBtn").classList.remove("btn-success");
-  document.getElementById("teamCompareModeBtn").classList.add("btn-outline-success");
-  renderRankingsTable();
-}
-function toggleTeamCompareMode() {
-  teamCompareMode = !teamCompareMode;
-  compareMode = false;
-  document.getElementById("teamCompareModeBtn").classList.toggle("btn-success", teamCompareMode);
-  document.getElementById("teamCompareModeBtn").classList.toggle("btn-outline-success", !teamCompareMode);
-  document.getElementById("compareModeBtn").classList.remove("btn-primary");
-  document.getElementById("compareModeBtn").classList.add("btn-outline-primary");
-  renderRankingsTable();
-}
-
-function getPlayer() { return getQueryParam("player") || ""; }
-function getMyTeamId() {
-  const me = globalRankings.find(r => r.name.toLowerCase() === getPlayer().toLowerCase());
-  return me ? me.teamId : null;
-}
-
-function loadRankings() {
-  const match_id = getQueryParam("match_id");
-  const player = getPlayer();
-  document.getElementById('rank-loading').style.display = "";
-  document.getElementById('rank-content').style.display = "none";
-  document.getElementById('rank-error').style.display = "none";
-  fetch(`/api/rankings/${match_id}?player=${encodeURIComponent(player)}`)
-    .then(res => res.json())
-    .then(data => {
-      // เพิ่ม teamId จากชื่อ/ทีมเดียวกัน
-      let rankings = data.rankings;
-      let teamGroup = {};
-      let tid = 1;
-      rankings.forEach(r => {
-        let key = r.name.replace(/[^A-Za-z0-9]/g, "");
-        if (!teamGroup[r.team] && r.team) {
-          teamGroup[r.team] = "T"+(tid++);
-        }
-        r.teamId = teamGroup[r.team] || "T"+(tid-1);
-      });
-      // เติม tier ถ้าไม่มี (mock จาก damage/kd)
-      rankings.forEach(r => {
-        if (!r.tier) {
-          let dmg = parseInt(r.damage)||0;
-          let kd = (parseInt(r.kills)||0) / 1;
-          if (dmg > 800 && kd > 2) r.tier = "SSS";
-          else if (dmg > 600 && kd > 1.5) r.tier = "SS";
-          else if (dmg > 400) r.tier = "S";
-          else if (dmg > 250) r.tier = "A";
-          else if (dmg > 150) r.tier = "B";
-          else if (dmg > 90) r.tier = "C";
-          else r.tier = "D";
-        }
-      });
-      globalRankings = rankings;
-      renderRankingsTable();
-    }).catch(e => {
-      document.getElementById('rank-loading').style.display = "none";
-      document.getElementById('rank-error').style.display = "block";
-      document.getElementById('rank-error').innerText = "Cannot load rankings.";
-    });
-}
-
-function renderRankingsTable() {
-  if (!globalRankings.length) return;
-  let player = getPlayer();
-  let html = `<div class="table-responsive"><table class="table table-bordered table-sm align-middle text-center rank-table">
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Nick</th>
-        <th>Weapon</th>
-        <th>Kills</th>
-        <th>HS</th>
-        <th>Assists</th>
-        <th>Damage</th>
-        <th>DBNOs</th>
-        <th>Traveled</th>
-        <th>Tier</th>
-        <th>Survived</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>`;
-  let lastTeamId = null;
-  for(let i=0;i<globalRankings.length;i++) {
-    let r = globalRankings[i];
-    let isMine = r.name.toLowerCase() === player.toLowerCase();
-    let teamChange = (i===0 || r.teamId !== lastTeamId);
-    // เพิ่มแถบแบ่งทีมเป็นแถวเว้นว่าง
-    if (teamChange && i !== 0) {
-      html += `<tr class="rank-team-divider"><td colspan="12" style="background:#fff !important; height:18px; border:none;"></td></tr>`;
+def parse_player_stats(match_json, player_name):
+    stats = {
+        "weapon": "-",
+        "kills": 0,
+        "damage": 0,
+        "dbno": 0,
+        "traveled": "0.00",
+        "timeAlive": "-",
+        "longest": "-",
+        "rank": "-",
+        "team": [],
+        "player": player_name,
+        "match_id": match_json["data"]["id"]
     }
-    html += `<tr data-teamid="${r.teamId}" class="${isMine?"active-row":""}">
-      <td>${r.rank}</td>
-      <td>${r.name}${r.alive ? ' <span class="badge bg-warning text-dark">Alive</span>' : ''}</td>
-      <td>${r.weapon}</td>
-      <td>${r.kills || 0}</td>
-      <td>${r.headshots ?? "-"}</td>
-      <td>${r.assists ?? "-"}</td>
-      <td><span style="color:${r.damage > 0 ? '#e03' : '#888'}">${r.damage}</span></td>
-      <td>${r.dbnos || "-"}</td>
-      <td>${r.traveled ?? '-'}</td>
-      <td>${r.tier ?? '-'}</td>
-      <td>${r.timeAlive ?? '-'}</td>
-      <td>`;
-    // Compare mode
-    if (compareMode && !isMine) {
-      html += `<button class="btn btn-outline-primary btn-xs" onclick="showCompareModal('${player}','${r.name}')">Compare</button>`;
+    included = match_json.get("included", [])
+    player_part = None
+    for p in included:
+        if p["type"] == "participant" and p["attributes"]["stats"]["name"].lower() == player_name.lower():
+            player_part = p
+            break
+    if not player_part:
+        return stats
+    s = player_part["attributes"]["stats"]
+    stats.update({
+        "weapon": s.get("most_damage_cause", "-"),
+        "kills": s.get("kills", 0),
+        "damage": s.get("damageDealt", 0),
+        "dbno": s.get("DBNOs", 0),
+        "traveled": f"{((s.get('rideDistance',0)+s.get('walkDistance',0))/1000):.2f}",
+        "timeAlive": f"{int(s.get('timeSurvived',0)//60)}m {int(s.get('timeSurvived',0)%60)}s",
+        "longest": f"{int(s.get('longestTimeSurvived',0)//60)}m",
+        "rank": s.get("winPlace", "-"),
+    })
+    return stats
+
+def get_match_info(match_id, player_name):
+    url = f"{PUBG_BASE}/matches/{match_id}"
+    r = requests.get(url, headers=HEADERS)
+    mdata = r.json()
+    match_info = mdata["data"]["attributes"]
+    mode = match_info.get("gameMode", "-")
+    mapname = match_info.get("mapName", "-")
+    match_type = "Normal" if "normal" in mode else "Ranked" if "ranked" in mode else "-"
+    stats = parse_player_stats(mdata, player_name)
+    stats.update({
+        "mode": mode,
+        "type": match_type,
+        "map": mapname,
+    })
+    return stats
+
+@app.route("/api/matches/<player_name>")
+def api_matches(player_name):
+    page = int(request.args.get("page", 0))
+    PER_PAGE = 5  # <<--- ดึง 5 ต่อ page
+    pid, pname = get_player_id(player_name)
+    if not pid:
+        return jsonify({"matches": []})
+    match_ids = get_recent_match_ids(pid, max_matches=5)  # <<--- ดึง 5 ล่าสุด
+    page_ids = match_ids[page*PER_PAGE:(page+1)*PER_PAGE]
+    matches = []
+    for mid in page_ids:
+        try:
+            m = get_match_info(mid, pname)
+            matches.append(m)
+        except Exception as e:
+            continue
+    return jsonify({"matches": matches})
+
+def get_player_participant(included, player_name):
+    for obj in included:
+        if obj["type"] == "participant":
+            stats = obj["attributes"]["stats"]
+            if stats.get("name", "").lower() == player_name.lower():
+                return stats
+    return None
+
+@app.route("/api/match/<match_id>")
+def match_detail(match_id):
+    player = request.args.get("player", "")
+    if not player:
+        return jsonify({"error": "missing player param"}), 400
+
+    url = f"{PUBG_BASE}/matches/{match_id}"
+    resp = requests.get(url, headers=HEADERS)
+    if resp.status_code != 200:
+        return jsonify({"error": "match not found"}), 404
+    data = resp.json()
+    attr = data["data"]["attributes"]
+    map_code = attr.get("mapName", "-")
+
+    stats = get_player_participant(data.get("included", []), player)
+    if not stats:
+        return jsonify({"error": "player not found in match"}), 404
+
+    def km(v):
+        return f"{float(v)/1000:.2f} km" if v else "0.00 km"
+    def time_str(sec):
+        return f"{int(sec//60)}m {int(sec%60)}s" if sec else "-"
+
+    result = {
+        "server": attr.get("shardId", "Steam"),
+        "map": map_code,
+        "damage": int(stats.get("damageDealt", 0)),
+        "kills": int(stats.get("kills", 0)),
+        "headshots": int(stats.get("headshotKills", 0)),
+        "assists": int(stats.get("assists", 0)),
+        "roadKills": int(stats.get("roadKills", 0)),
+        "vehiclesDestroyed": int(stats.get("vehicleDestroys", 0)),
+        "dbnos": int(stats.get("DBNOs", 0)),
+        "revives": int(stats.get("revives", 0)),
+        "timeAlive": time_str(stats.get("timeSurvived", 0)),
+        "boosts": int(stats.get("boosts", 0)),
+        "heals": int(stats.get("heals", 0)),
+        "weaponsAcquired": int(stats.get("weaponsAcquired", 0)),
+        "traveled": km(stats.get("rideDistance",0) + stats.get("walkDistance",0) + stats.get("swimDistance",0)),
+        "walked": km(stats.get("walkDistance", 0)),
+        "vehicle": km(stats.get("rideDistance", 0)),
+        "swim": km(stats.get("swimDistance", 0)),
     }
-    // Team compare mode (เฉพาะหัวทีม)
-    if (teamCompareMode && teamChange && r.teamId !== getMyTeamId()) {
-      html += `<button class="btn btn-outline-danger btn-xs" onclick="compareTeam('${r.teamId}')">Compare</button>`;
-    }
-    html += `</td></tr>`;
-    lastTeamId = r.teamId;
-  }
-  html += "</tbody></table></div>";
-  document.getElementById('rank-loading').style.display = "none";
-  document.getElementById('rank-content').style.display = "";
-  document.getElementById('rank-content').innerHTML = html;
-}
+    return jsonify(result)
 
-function showCompareModal(player1, player2) {
-  // ในโปรดักชั่นให้ fetch API จริง, demo เป็น mock
-  fetch(`/api/playercompare?player1=${encodeURIComponent(player1)}&player2=${encodeURIComponent(player2)}`)
-    .then(res=>res.json())
-    .then(data=>{
-      const stat1 = data.player1;
-      const stat2 = data.player2;
-      const win1 = data.win1, win2 = data.win2;
-      document.getElementById("compareResult").innerHTML = `
-        <div class="row align-items-center">
-          <div class="col-5 text-center">
-            <div class="fw-bold fs-5 mb-2">${stat1.name}</div>
-            <div>Tier: <span class="badge bg-primary">${stat1.tier}</span></div>
-            <div>K/D: <b>${stat1.kd}</b></div>
-            <div>Damage: <b>${stat1.damage}</b></div>
-            <div>Survived: <b>${stat1.survived}</b></div>
-          </div>
-          <div class="col-2 text-center">
-            <canvas id="comparePie" width="110" height="110"></canvas>
-            <div class="mt-2"><span class="fw-bold text-success">${win1}%</span> vs <span class="fw-bold text-danger">${win2}%</span></div>
-          </div>
-          <div class="col-5 text-center">
-            <div class="fw-bold fs-5 mb-2">${stat2.name}</div>
-            <div>Tier: <span class="badge bg-warning text-dark">${stat2.tier}</span></div>
-            <div>K/D: <b>${stat2.kd}</b></div>
-            <div>Damage: <b>${stat2.damage}</b></div>
-            <div>Survived: <b>${stat2.survived}</b></div>
-          </div>
-        </div>
-      `;
-      const modal = new bootstrap.Modal(document.getElementById("compareModal"));
-      modal.show();
-      setTimeout(() => {
-        const ctx = document.getElementById('comparePie').getContext('2d');
-        new Chart(ctx, {
-          type: 'doughnut',
-          data: {
-            labels: [stat1.name, stat2.name],
-            datasets: [{
-              data: [win1, win2],
-              backgroundColor: ['#36a2eb','#f45b69'],
-              borderWidth: 1
-            }]
-          },
-          options: {
-            cutout: "75%",
-            plugins: {legend: {display: false}},
-            animation: false
-          }
-        });
-      }, 200);
-    });
-}
+# --- Team Stats ---
+@app.route("/api/teamstats/<match_id>")
+def team_stats(match_id):
+    player = request.args.get("player", "")
+    url = f"{PUBG_BASE}/matches/{match_id}"
+    resp = requests.get(url, headers=HEADERS)
+    if resp.status_code != 200:
+        return jsonify({"error": "match not found"}), 404
+    data = resp.json()
+    included = data.get("included", [])
+    player_participant = None
+    for obj in included:
+        if obj["type"] == "participant":
+            stats = obj["attributes"]["stats"]
+            if stats.get("name", "").lower() == player.lower():
+                player_participant = obj
+                break
+    if not player_participant:
+        return jsonify({"error": "player not found"}), 404
 
-function compareTeam(teamId2) {
-  const myTeamId = getMyTeamId();
-  const team1 = globalRankings.filter(r => r.teamId === myTeamId).map(r => r.name);
-  const team2 = globalRankings.filter(r => r.teamId === teamId2).map(r => r.name);
-  fetch(`/api/teamcompare?team1=${team1.join(",")}&team2=${team2.join(",")}`)
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById("teamCompareResult").innerHTML = `
-        <div class="row align-items-center">
-          <div class="col-5 text-center">
-            <div class="fw-bold fs-5 mb-2">${data.team1.name || "Team 1"}</div>
-            <div>Tier: <span class="badge bg-primary">${data.team1.tier}</span></div>
-            <div>K/D: <b>${data.team1.kd}</b></div>
-            <div>Damage: <b>${data.team1.damage}</b></div>
-            <div>Survived: <b>${data.team1.survived}</b></div>
-            <div class="mt-2 small">${data.members1.map(m=>m).join(", ")}</div>
-          </div>
-          <div class="col-2 text-center">
-            <canvas id="teamComparePie" width="110" height="110"></canvas>
-            <div class="mt-2"><span class="fw-bold text-success">${data.win1}%</span> vs <span class="fw-bold text-danger">${data.win2}%</span></div>
-          </div>
-          <div class="col-5 text-center">
-            <div class="fw-bold fs-5 mb-2">${data.team2.name || "Team 2"}</div>
-            <div>Tier: <span class="badge bg-warning text-dark">${data.team2.tier}</span></div>
-            <div>K/D: <b>${data.team2.kd}</b></div>
-            <div>Damage: <b>${data.team2.damage}</b></div>
-            <div>Survived: <b>${data.team2.survived}</b></div>
-            <div class="mt-2 small">${data.members2.map(m=>m).join(", ")}</div>
-          </div>
-        </div>
-      `;
-      const modal = new bootstrap.Modal(document.getElementById("teamCompareModal"));
-      modal.show();
-      setTimeout(() => {
-        const ctx = document.getElementById('teamComparePie').getContext('2d');
-        new Chart(ctx, {
-          type: 'doughnut',
-          data: {
-            labels: [data.team1.name, data.team2.name],
-            datasets: [{
-              data: [data.win1, data.win2],
-              backgroundColor: ['#36a2eb','#f45b69'],
-              borderWidth: 1
-            }]
-          },
-          options: {
-            cutout: "75%",
-            plugins: {legend: {display: false}},
-            animation: false
-          }
-        });
-      }, 200);
-    });
-}
+    roster_id = None
+    for obj in included:
+        if obj["type"] == "roster":
+            p_ids = [p["id"] for p in obj["relationships"]["participants"]["data"]]
+            if player_participant["id"] in p_ids:
+                roster_id = obj["id"]
+                break
+    if not roster_id:
+        return jsonify({"error": "team not found"}), 404
 
-// ------------- Initial load
-window.onload = function() {
-  showTab('perf');
-  loadPerformance();
-}
-</script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+    team_participants = []
+    for obj in included:
+        if obj["type"] == "roster" and obj["id"] == roster_id:
+            p_ids = [p["id"] for p in obj["relationships"]["participants"]["data"]]
+            for obj2 in included:
+                if obj2["type"] == "participant" and obj2["id"] in p_ids:
+                    team_participants.append(obj2)
+    total_kills = sum(p["attributes"]["stats"].get("kills", 0) for p in team_participants)
+    total_damage = sum(int(p["attributes"]["stats"].get("damageDealt", 0)) for p in team_participants)
+    avg_distance = (
+        sum(
+            float(p["attributes"]["stats"].get("rideDistance", 0)) +
+            float(p["attributes"]["stats"].get("walkDistance", 0)) +
+            float(p["attributes"]["stats"].get("swimDistance", 0))
+            for p in team_participants
+        ) / len(team_participants) if team_participants else 0
+    )
+
+    team_rank = None
+    for obj in included:
+        if obj["type"] == "roster" and obj["id"] == roster_id:
+            team_rank = obj["attributes"].get("stats", {}).get("rank", "-")
+            break
+
+    members = []
+    for p in team_participants:
+        s = p["attributes"]["stats"]
+        members.append({
+            "name": s.get("name", "-"),
+            "weapon": s.get("most_damage_cause", "-"),
+            "kills": s.get("kills", 0),
+            "headshots": s.get("headshotKills", 0),
+            "assists": s.get("assists", 0),
+            "damage": int(s.get("damageDealt", 0)),
+            "dbnos": s.get("DBNOs", 0),
+            "traveled": f"{((s.get('rideDistance',0)+s.get('walkDistance',0))/1000):.2f} km",
+            "longest": f"{int(s.get('longestTimeSurvived',0)//60)}m" if s.get('longestTimeSurvived', 0) else "-",
+            "timeAlive": f"{int(s.get('timeSurvived',0)//60):02d}:{int(s.get('timeSurvived',0)%60):02d}",
+        })
+
+    return jsonify({
+        "team_rank": team_rank,
+        "total_kills": total_kills,
+        "total_damage": total_damage,
+        "avg_distance": int(avg_distance),
+        "members": members,
+        "player": player
+    })
+
+# --- Tier Logic ---
+def get_tier_from_stats(stats):
+    dmg = stats.get("damage", 0)
+    kd = stats.get("kd", 1)
+    if dmg > 800 and kd > 2: return "SSS"
+    if dmg > 600 and kd > 1.5: return "SS"
+    if dmg > 400: return "S"
+    if dmg > 250: return "A"
+    if dmg > 150: return "B"
+    if dmg > 90: return "C"
+    return "D"
+
+# --- Rankings (ส่ง tier ไปด้วย ใช้ tier นี้แทนช่อง Longest) ---
+@app.route("/api/rankings/<match_id>")
+def total_rankings(match_id):
+    player = request.args.get("player", "")
+    url = f"{PUBG_BASE}/matches/{match_id}"
+    resp = requests.get(url, headers=HEADERS)
+    if resp.status_code != 200:
+        return jsonify({"error": "match not found"}), 404
+    data = resp.json()
+    included = data.get("included", [])
+    participants = []
+    roster_part = {}
+    for obj in included:
+        if obj["type"] == "roster":
+            for p in obj["relationships"]["participants"]["data"]:
+                roster_part[p["id"]] = obj["id"]
+    for obj in included:
+        if obj["type"] == "participant":
+            s = obj["attributes"]["stats"]
+            damage = int(s.get("damageDealt", 0))
+            kills = s.get("kills", 0)
+            kd = kills  # สมมติเป็น avg kill/game (เพราะ 1 เกม)
+            tier = get_tier_from_stats({"damage": damage, "kd": kd})
+            participants.append({
+                "name": s.get("name", "-"),
+                "weapon": s.get("most_damage_cause", "-"),
+                "kills": kills,
+                "headshots": s.get("headshotKills", 0),
+                "assists": s.get("assists", 0),
+                "damage": damage,
+                "dbnos": s.get("DBNOs", 0),
+                "traveled": f"{((s.get('rideDistance',0)+s.get('walkDistance',0))/1000):.2f}km",
+                "tier": tier,
+                "timeAlive": f"{int(s.get('timeSurvived',0)//60):02d}:{int(s.get('timeSurvived',0)%60):02d}",
+                "rank": s.get("winPlace", 999),
+                "alive": s.get("DBNOs", 0) == 0 and s.get("winPlace", 999) == 1,
+                "team": roster_part.get(obj["id"], "-")
+            })
+    participants.sort(key=lambda x: x["rank"])
+    for idx, p in enumerate(participants, 1):
+        p["no"] = idx
+        p["highlight"] = (p["name"].lower() == player.lower())
+    return jsonify({"rankings": participants, "player": player})
+
+# --- Compare 1v1 ---
+@app.route("/api/playercompare")
+def api_player_compare():
+    player1 = request.args.get("player1")
+    player2 = request.args.get("player2")
+    def fetch_stat(name):
+        pid, _ = get_player_id(name)
+        if not pid:
+            return {"name": name, "kd": 0, "damage": 0, "survived": 0, "tier": "E"}
+        mids = get_recent_match_ids(pid, max_matches=5)
+        kills, damage, survived = 0, 0, 0
+        for mid in mids:
+            url = f"{PUBG_BASE}/matches/{mid}"
+            r = requests.get(url, headers=HEADERS)
+            if r.status_code != 200: continue
+            mdata = r.json()
+            for part in mdata.get("included", []):
+                if part["type"]=="participant" and part["attributes"]["stats"]["name"].lower()==name.lower():
+                    s = part["attributes"]["stats"]
+                    kills += s.get("kills",0)
+                    damage += s.get("damageDealt",0)
+                    survived += s.get("timeSurvived",0)
+        n = len(mids) or 1
+        kd = kills / n
+        stat = {"name": name, "kd": round(kd,2), "damage": int(damage/n), "survived": f"{int(survived/n//60)}m", "tier": get_tier_from_stats({"damage":damage/n, "kd":kd})}
+        return stat
+    stat1 = fetch_stat(player1)
+    stat2 = fetch_stat(player2)
+    tier_order = ["E","D","C","B","A","S","SS","SSS"]
+    win1 = 50 + 10*(tier_order.index(stat1["tier"])-tier_order.index(stat2["tier"]))
+    win1 = min(max(win1,5),95)
+    win2 = 100 - win1
+    return jsonify({"player1":stat1,"player2":stat2,"win1":win1,"win2":win2})
+
+# --- Compare Team ---
+@app.route("/api/teamcompare")
+def api_team_compare():
+    # รับชื่อทีมจาก query string และกรองชื่อว่าง
+    team1 = [n.strip() for n in request.args.get("team1", "").split(",") if n.strip()]
+    team2 = [n.strip() for n in request.args.get("team2", "").split(",") if n.strip()]
+    def get_team_stats(names):
+        kills, damage, survived, count = 0,0,0,0
+        members=[]
+        for n in names:
+            if not n:
+                continue
+            pid, _ = get_player_id(n)
+            if not pid: continue
+            mids = get_recent_match_ids(pid, max_matches=5)
+            k,d,s = 0,0,0
+            for mid in mids:
+                url = f"{PUBG_BASE}/matches/{mid}"
+                r = requests.get(url, headers=HEADERS)
+                if r.status_code != 200: continue
+                mdata = r.json()
+                for part in mdata.get("included", []):
+                    if part["type"]=="participant" and part["attributes"]["stats"]["name"].lower()==n.lower():
+                        sdata = part["attributes"]["stats"]
+                        k += sdata.get("kills",0)
+                        d += sdata.get("damageDealt",0)
+                        s += sdata.get("timeSurvived",0)
+            n_match = len(mids) or 1
+            kills += k/n_match
+            damage += d/n_match
+            survived += s/n_match
+            members.append(n)
+            count+=1
+        avg_kd = round(kills/(count or 1),2)
+        avg_damage = int(damage/(count or 1))
+        avg_survived = f"{int((survived/(count or 1))//60)}m"
+        tier = get_tier_from_stats({"damage":avg_damage, "kd":avg_kd})
+        return {"name": " / ".join(members[:2]) + (" ..." if len(members)>2 else ""), "kd": avg_kd, "damage": avg_damage, "survived": avg_survived, "tier": tier, "members": members}
+    t1 = get_team_stats(team1)
+    t2 = get_team_stats(team2)
+    tier_order = ["E","D","C","B","A","S","SS","SSS"]
+    win1 = 50 + 10*(tier_order.index(t1["tier"])-tier_order.index(t2["tier"]))
+    win1 = min(max(win1,5),95)
+    win2 = 100 - win1
+    return jsonify({"team1":t1,"team2":t2,"win1":win1,"win2":win2, "members1": t1["members"], "members2": t2["members"]})
+
+def get_player_id(player_name):
+    url = f"{PUBG_BASE}/players?filter[playerNames]={player_name}"
+    print("GET:", url)
+    r = requests.get(url, headers=HEADERS, timeout=15)
+    print("Status:", r.status_code)
+    data = r.json()
+    print("Data:", data)
+    if "data" in data and data["data"]:
+        return data["data"][0]["id"], data["data"][0]["attributes"]["name"]
+    return None, None
+
+
+# --- Static ---
+@app.route("/")
+def root():
+    return send_from_directory(".", "index.html")
+@app.route("/<path:path>")
+def static_files(path):
+    return send_from_directory(".", path)
+
+if __name__ == "__main__":
+    # เพิ่ม host='0.0.0.0' และ threaded=True เพื่อรองรับหลาย request และเข้าถึงจาก network อื่นได้
+    app.run(debug=True, host="0.0.0.0", port=5000, threaded=True)
