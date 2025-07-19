@@ -362,6 +362,18 @@ def api_team_compare():
     win2 = 100 - win1
     return jsonify({"team1":t1,"team2":t2,"win1":win1,"win2":win2, "members1": t1["members"], "members2": t2["members"]})
 
+def get_player_id(player_name):
+    url = f"{PUBG_BASE}/players?filter[playerNames]={player_name}"
+    print("GET:", url)
+    r = requests.get(url, headers=HEADERS, timeout=15)
+    print("Status:", r.status_code)
+    data = r.json()
+    print("Data:", data)
+    if "data" in data and data["data"]:
+        return data["data"][0]["id"], data["data"][0]["attributes"]["name"]
+    return None, None
+
+
 # --- Static ---
 @app.route("/")
 def root():
