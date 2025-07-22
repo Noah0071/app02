@@ -348,7 +348,7 @@ async function loadPerformance() {
   }
 }
 
-// Team Stats tab (ปรับตาราง)
+// Team Stats tab
 async function loadTeamStats() {
   const match_id = getQueryParam("match_id");
   const player = getQueryParam("player");
@@ -490,13 +490,21 @@ function renderRankingsTable() {
     let r = globalRankings[i];
     let isMine = r.name.toLowerCase() === player.toLowerCase();
     let teamChange = (i===0 || r.teamId !== lastTeamId);
-    // เพิ่มแถบแบ่งทีมเป็นแถวเว้นว่าง
     if (teamChange && i !== 0) {
       html += `<tr class="rank-team-divider"><td colspan="12" style="background:#fff !important; height:18px; border:none;"></td></tr>`;
     }
-    html += `<tr data-teamid="${r.teamId}" class="${isMine?"active-row":""}">
-      <td>${r.rank}</td>
-      <td>${r.name}${r.alive ? ' <span class="badge bg-warning text-dark">Alive</span>' : ''}</td>
+    html += `<tr data-teamid="${r.teamId}" class="${isMine?"active-row":""}">`;
+    html += `<td>${r.rank}</td>`;
+    // --------- MAKE NAME COLUMN CLICKABLE IN COMPARE MODE ----------
+    html += `<td>`;
+    if (compareMode && !isMine) {
+      html += `<a href="#" style="font-weight:600;color:#1b63e6;text-decoration:underline;" onclick="showCompareModal('${player}','${r.name}');return false;">${r.name}</a>`;
+      if (r.alive) html += ' <span class="badge bg-warning text-dark">Alive</span>';
+    } else {
+      html += `${r.name}${r.alive ? ' <span class="badge bg-warning text-dark">Alive</span>' : ''}`;
+    }
+    html += `</td>`;
+    html += `
       <td>${r.weapon}</td>
       <td>${r.kills || 0}</td>
       <td>${r.headshots ?? "-"}</td>
@@ -507,11 +515,7 @@ function renderRankingsTable() {
       <td>${r.tier ?? '-'}</td>
       <td>${r.timeAlive ?? '-'}</td>
       <td>`;
-    // Compare mode
-    if (compareMode && !isMine) {
-      html += `<button class="btn btn-outline-primary btn-xs" onclick="showCompareModal('${player}','${r.name}')">Compare</button>`;
-    }
-    // Team compare mode (เฉพาะหัวทีม)
+    // --- TEAM COMPARE MODE ---
     if (teamCompareMode && teamChange && r.teamId !== getMyTeamId()) {
       html += `<button class="btn btn-outline-danger btn-xs" onclick="compareTeam('${r.teamId}')">Compare</button>`;
     }
@@ -525,7 +529,6 @@ function renderRankingsTable() {
 }
 
 function showCompareModal(player1, player2) {
-  // ในโปรดักชั่นให้ fetch API จริง, demo เป็น mock
   fetch(`/api/playercompare?player1=${encodeURIComponent(player1)}&player2=${encodeURIComponent(player2)}`)
     .then(res=>res.json())
     .then(data=>{
@@ -642,3 +645,4 @@ window.onload = function() {
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
